@@ -6,7 +6,7 @@ services:
     plan: starter # You can choose other plans like standard, pro, etc.
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    startCommand: alembic upgrade head && gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -15,7 +15,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_ORIGINS
-        value: "https://your-frontend-domain.com"
+        value: "https://myfleetos.vercel.app"
       - key: JWT_SECRET
         generateValue: true
 
