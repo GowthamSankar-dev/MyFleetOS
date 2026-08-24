@@ -3,10 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Map, List, Smartphone, LocateFixed } from 'lucide-react'
 import FleetMap from '../components/FleetMap'
 import VehicleList from '../components/VehicleList'
+import GeofenceList from '../components/GeofenceList'
 import TopBar from '../components/TopBar' // Unused, keeping import just in case, but let's remove it
 import EditVehicleModal from '../components/EditVehicleModal'
 import DeleteVehicleModal from '../components/DeleteVehicleModal'
-import { deleteVehicle, deleteUnlinkedVehicles } from '../api/fleetApi'
+import AddGeofenceModal from '../components/AddGeofenceModal'
+import DeleteGeofenceModal from '../components/DeleteGeofenceModal'
+import { deleteVehicle, deleteUnlinkedVehicles, fetchGeofences, createGeofence, deleteGeofence } from '../api/fleetApi'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 
@@ -39,6 +42,21 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
   
   const { user } = useAuth()
   const [ownerLocation, setOwnerLocation] = useState(null)
+  const [geofences, setGeofences] = useState([])
+  const [rightPanelView, setRightPanelView] = useState('vehicles')
+  const [isDrawingGeofence, setIsDrawingGeofence] = useState(false)
+  const [selectedGeofence, setSelectedGeofence] = useState(null)
+  
+  const [isAddGeofenceModalOpen, setIsAddGeofenceModalOpen] = useState(false)
+  const [pendingGeofenceCoords, setPendingGeofenceCoords] = useState(null)
+  const [deletingGeofence, setDeletingGeofence] = useState(null)
+  const [isDeleteGeofenceModalOpen, setIsDeleteGeofenceModalOpen] = useState(false)
+
+  useEffect(() => {
+    fetchGeofences()
+      .then(setGeofences)
+      .catch(err => console.error("Failed to load geofences", err))
+  }, [])
   
   const [showOwnerLocation, setShowOwnerLocation] = useState(() => {
     return localStorage.getItem('fleet_show_owner_location') !== 'false'
@@ -105,6 +123,60 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
     }
   }
 
+  const requestDeleteGeofence = useCallback((id) => {
+    const gf = geofences.find(g => g.id === id)
+    if (gf) {
+      setDeletingGeofence(gf)
+      setIsDeleteGeofenceModalOpen(true)
+    }
+  }, [geofences])
+
+  const confirmDeleteGeofence = useCallback(async (id) => {
+    try {
+      await deleteGeofence(id)
+      setGeofences(prev => prev.filter(g => g.id !== id))
+      if (selectedGeofence?.id === id) {
+        setSelectedGeofence(null)
+      }
+      return true
+    } catch (err) {
+      alert("Failed to delete geofence")
+      throw err
+    }
+  }, [selectedGeofence])
+
+  const handleGeofenceDrawn = useCallback((coordinates) => {
+    setPendingGeofenceCoords(coordinates)
+    setIsAddGeofenceModalOpen(true)
+  }, [])
+
+  const handleSaveGeofence = useCallback(async ({ name, color }) => {
+    if (!pendingGeofenceCoords) return
+    try {
+      const newGf = await createGeofence({ name, color, coordinates: pendingGeofenceCoords })
+      setGeofences(prev => [...prev, newGf])
+      setIsDrawingGeofence(false)
+      setIsAddGeofenceModalOpen(false)
+      setPendingGeofenceCoords(null)
+      return true
+    } catch (err) {
+      alert("Failed to create geofence")
+      throw err
+    }
+  }, [pendingGeofenceCoords])
+
+  const handleCancelDrawing = useCallback(() => {
+    setIsDrawingGeofence(false)
+    setIsAddGeofenceModalOpen(false)
+    setPendingGeofenceCoords(null)
+  }, [])
+
+  const handleGeofenceClick = useCallback((gf) => {
+    setSelectedGeofence(prev => prev?.id === gf.id ? null : gf)
+    setRightPanelView('geofences')
+    setActiveTab('list')
+  }, [])
+
   // Use interpolated position if available, otherwise fall back to raw GPS
   const getDisplayCoords = (vehicleId) => {
     const interp = interpolatedPositions[vehicleId]
@@ -138,7 +210,10 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
             <span>Map View</span>
           </button>
           <button
-            onClick={() => setActiveTab('list')}
+            onClick={() => {
+              setActiveTab('list')
+              if (isDrawingGeofence) handleCancelDrawing()
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition-colors cursor-pointer ${activeTab === 'list'
                 ? 'bg-brand-primary dark:bg-[#17b385] text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -162,16 +237,16 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
             onInterpolatedPositions={handleInterpolatedPositions}
             ownerLocation={ownerLocation}
             ownerUser={user}
+            geofences={geofences}
+            isDashboard={true}
+            isDrawingGeofence={isDrawingGeofence}
+            onCancelDrawing={handleCancelDrawing}
+            onGeofenceDrawn={handleGeofenceDrawn}
+            selectedGeofence={selectedGeofence}
+            onGeofenceClick={handleGeofenceClick}
+            showOwnerLocation={showOwnerLocation}
+            onToggleOwnerLocation={toggleOwnerLocation}
           />
-
-          {/* Toggle Owner Location Button */}
-          <button 
-             onClick={toggleOwnerLocation}
-             className="absolute bottom-6 right-4 z-[400] bg-white dark:bg-slate-800 p-2.5 rounded-full shadow-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-             title={showOwnerLocation ? "Hide My Location" : "Show My Location"}
-          >
-             <LocateFixed size={20} className={showOwnerLocation ? "text-brand-primary dark:text-[#17b385]" : "text-slate-400"} />
-          </button>
 
           {/* Overlay: no vehicles hint */}
           {!isLoading && vehicles.length === 0 && (
@@ -210,25 +285,46 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
           })()}
         </div>
 
-        {/* ── Vehicle list panel ────────────────────────────────────────── */}
-        <div className={`w-full md:w-56 shrink-0 h-full ${activeTab === 'list' ? 'block' : 'hidden md:block'}`}>
-          <VehicleList
-            vehicles={vehicles}
-            locations={locations}
-            selectedVehicle={selectedVehicle}
-            onSelect={handleSelect}
-            onEdit={(v) => {
-              setEditingVehicle(v)
-              setIsEditModalOpen(true)
-            }}
-            onDelete={(v) => {
-              setDeletingVehicle(v)
-              setIsDeleteModalOpen(true)
-            }}
-            onClearUnlinked={handleClearUnlinked}
-            onRefresh={onRefresh}
-            isLoading={isLoading}
-          />
+        {/* ── Right list panel ────────────────────────────────────────── */}
+        <div className={`w-full md:w-80 shrink-0 h-full ${activeTab === 'list' ? 'block' : 'hidden md:block'}`}>
+          {rightPanelView === 'vehicles' ? (
+            <VehicleList
+              vehicles={vehicles}
+              locations={locations}
+              selectedVehicle={selectedVehicle}
+              onSelect={handleSelect}
+              onEdit={(v) => {
+                setEditingVehicle(v)
+                setIsEditModalOpen(true)
+              }}
+              onDelete={(v) => {
+                setDeletingVehicle(v)
+                setIsDeleteModalOpen(true)
+              }}
+              onClearUnlinked={handleClearUnlinked}
+              onRefresh={onRefresh}
+              isLoading={isLoading}
+              onToggleView={() => setRightPanelView('geofences')}
+            />
+          ) : (
+            <GeofenceList
+              geofences={geofences}
+              selectedGeofence={selectedGeofence}
+              onSelect={handleGeofenceClick}
+              onRefresh={() => fetchGeofences().then(setGeofences).catch(console.error)}
+              isLoading={false}
+              onToggleView={() => {
+                setRightPanelView('vehicles')
+                setSelectedGeofence(null)
+                if (isDrawingGeofence) handleCancelDrawing()
+              }}
+              onAddGeofence={() => {
+                setIsDrawingGeofence(true)
+                setActiveTab('map')
+              }}
+              onDeleteGeofence={requestDeleteGeofence}
+            />
+          )}
         </div>
       </div>
 
@@ -250,6 +346,22 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
         }}
         vehicle={deletingVehicle}
         onConfirm={handleConfirmDelete}
+      />
+
+      <AddGeofenceModal
+        isOpen={isAddGeofenceModalOpen}
+        onClose={handleCancelDrawing}
+        onSave={handleSaveGeofence}
+      />
+
+      <DeleteGeofenceModal
+        isOpen={isDeleteGeofenceModalOpen}
+        onClose={() => {
+          setIsDeleteGeofenceModalOpen(false)
+          setDeletingGeofence(null)
+        }}
+        geofence={deletingGeofence}
+        onConfirm={confirmDeleteGeofence}
       />
     </motion.div>
   )

@@ -1,12 +1,55 @@
-import { MapContainer, TileLayer, useMap, LayersControl, LayerGroup, Polyline, CircleMarker, Marker } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap, LayerGroup, Polyline, CircleMarker, Marker, Polygon } from 'react-leaflet'
+import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
-import { Compass, Focus, Map as MapIcon, Maximize2, Minimize2, Search, Crosshair, Users, Activity } from 'lucide-react'
+import { Compass, Focus, Map as MapIcon, Maximize2, Minimize2, Search, Crosshair, Users, Activity, Layers, LocateFixed, Plus, Minus } from 'lucide-react'
 import { getAvatarUrl } from '../api/fleetApi'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import AnimatedMarker from './AnimatedMarker'
 import { BASE_URL } from '../api/fleetApi'
 import { useTheme } from '../context/ThemeContext'
+import '@geoman-io/leaflet-geoman-free'
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
+
+/**
+ * GeofenceDrawer — integrates Geoman drawing tools.
+ */
+function GeofenceDrawer({ isDrawingGeofence, onCancelDrawing, onGeofenceDrawn }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (isDrawingGeofence) {
+      map.pm.enableDraw('Polygon', {
+        snappable: true,
+        snapDistance: 20,
+      })
+
+      const handleCreate = (e) => {
+        const layer = e.layer
+        const latlngs = layer.getLatLngs()[0] // Outer ring
+        const coordinates = latlngs.map(ll => ({ lat: ll.lat, lng: ll.lng }))
+        
+        if (onGeofenceDrawn) {
+          onGeofenceDrawn(coordinates)
+        }
+        
+        map.removeLayer(layer)
+        map.pm.disableDraw()
+      }
+
+      map.on('pm:create', handleCreate)
+
+      return () => {
+        map.off('pm:create', handleCreate)
+        map.pm.disableDraw()
+      }
+    } else {
+      map.pm.disableDraw()
+    }
+  }, [map, isDrawingGeofence, onCancelDrawing, onGeofenceDrawn])
+
+  return null
+}
 
 /**
  * MapFlyTo — imperative component to pan/zoom to a vehicle when selected.
@@ -29,97 +72,30 @@ function MapFlyTo({ vehicleId, position }) {
 }
 
 /**
- * ThemeTracker — listens for base layer changes and adds dynamic CSS classes
- * to the layers control so text color adapts to dark/light backgrounds.
+ * CustomMapControls — Unified control panel replacing default Leaflet controls.
  */
-function ThemeTracker() {
+function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
   const map = useMap()
-  
-  useEffect(() => {
-    const updateTheme = (e) => {
-      const isDark = e.name === 'Satellite' || e.name === 'Dark Mode'
-      const control = map.getContainer().querySelector('.leaflet-control-layers')
-      if (control) {
-        if (isDark) {
-          control.classList.add('theme-dark-map')
-          control.classList.remove('theme-light-map')
-        } else {
-          control.classList.remove('theme-dark-map')
-          control.classList.add('theme-light-map')
-        }
-      }
-    }
-    
-    map.on('baselayerchange', updateTheme)
-    
-    // Initial theme set based on currently checked layer
-    const control = map.getContainer().querySelector('.leaflet-control-layers')
-    if (control) {
-      setTimeout(() => {
-        const checkedInput = control.querySelector('input:checked')
-        if (checkedInput) {
-          const label = checkedInput.closest('label')
-          if (label) {
-            const span = label.querySelector('span')
-            if (span) {
-              const text = span.textContent.trim()
-              const isDark = text === 'Satellite' || text === 'Dark Mode'
-              if (isDark) {
-                control.classList.add('theme-dark-map')
-                control.classList.remove('theme-light-map')
-              } else {
-                control.classList.remove('theme-dark-map')
-                control.classList.add('theme-light-map')
-              }
-            }
-          }
-        }
-      }, 50)
-    }
-    
-    return () => {
-      map.off('baselayerchange', updateTheme)
-    }
-  }, [map])
-
-  // Programmatically switch baselayers when isDarkMode changes
-  const { isDarkMode } = useTheme()
-  useEffect(() => {
-    const control = map.getContainer().querySelector('.leaflet-control-layers')
-    if (control) {
-      const labels = control.querySelectorAll('label')
-      labels.forEach(label => {
-        const span = label.querySelector('span')
-        if (span) {
-          const text = span.textContent.trim()
-          if (isDarkMode && text === 'Dark Mode') {
-            const input = label.querySelector('input')
-            if (input && !input.checked) input.click()
-          } else if (!isDarkMode && text === 'Satellite') {
-            const input = label.querySelector('input')
-            if (input && !input.checked) input.click()
-          }
-        }
-      })
-    }
-  }, [isDarkMode, map])
-  
-  return null
-}
-
-/**
- * FullScreenControl — provides a button to toggle full screen mode for the map.
- */
-function FullScreenControl() {
-  const map = useMap()
+  const { mapTheme, setMapTheme } = useTheme()
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const zoomRef = useRef(null)
+  const topRightRef = useRef(null)
+  const bottomRightRef = useRef(null)
+
+  useEffect(() => {
+    [zoomRef, topRightRef, bottomRightRef].forEach(ref => {
+      if (ref.current) {
+        L.DomEvent.disableClickPropagation(ref.current)
+        L.DomEvent.disableScrollPropagation(ref.current)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
-      setTimeout(() => {
-        map.invalidateSize()
-      }, 100)
+      setTimeout(() => map.invalidateSize(), 100)
     }
 
     document.addEventListener('fullscreenchange', handleFullscreenChange)
@@ -139,24 +115,52 @@ function FullScreenControl() {
     }
   }
 
+  const themes = ['Satellite', 'OpenStreetMap', 'Dark Mode', 'Light Mode']
+  const cycleTheme = () => {
+    const nextIdx = (themes.indexOf(mapTheme) + 1) % themes.length
+    setMapTheme(themes[nextIdx])
+  }
+
+  const btnClass = "flex items-center justify-center w-9 h-9 md:w-[42px] md:h-[42px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-200 dark:border-slate-700 last:border-b-0 cursor-pointer"
+  const iconClass = "w-[18px] h-[18px] md:w-5 md:h-5"
+
   return (
-    <div className="leaflet-top leaflet-left" style={{ top: '80px', left: '0px', position: 'absolute', zIndex: 1000 }}>
-      <div className="leaflet-control leaflet-bar">
-        <a 
-          href="#"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            toggleFullscreen()
-          }}
-          title={isFullscreen ? "Exit Full Screen" : "Full Screen"}
-          className="!flex items-center justify-center bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          style={{ width: '34px', height: '34px' }}
-        >
-          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </a>
+    <>
+      {/* Top Left: Zoom Controls */}
+      <div className="leaflet-top leaflet-left absolute z-[1000] top-2 left-2 md:top-4 md:left-4">
+        <div ref={zoomRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+          <button onClick={(e) => { e.preventDefault(); map.zoomIn() }} className={btnClass} title="Zoom In">
+            <Plus className={iconClass} />
+          </button>
+          <button onClick={(e) => { e.preventDefault(); map.zoomOut() }} className={btnClass} title="Zoom Out">
+            <Minus className={iconClass} />
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Top Right: Theme & Full Screen */}
+      <div className="leaflet-top leaflet-right absolute z-[1000] top-2 right-2 md:top-4 md:right-4">
+        <div ref={topRightRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+          <button onClick={(e) => { e.preventDefault(); cycleTheme() }} className={btnClass} title={`Map Theme: ${mapTheme}`}>
+            <Layers className={iconClass} />
+          </button>
+          <button onClick={(e) => { e.preventDefault(); toggleFullscreen() }} className={btnClass} title={isFullscreen ? "Exit Full Screen" : "Full Screen"}>
+            {isFullscreen ? <Minimize2 className={iconClass} /> : <Maximize2 className={iconClass} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom Right: Show My Location */}
+      {onToggleOwnerLocation && (
+        <div className="leaflet-bottom leaflet-right absolute z-[1000] bottom-4 right-2 md:bottom-6 md:right-4">
+          <div ref={bottomRightRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+            <button onClick={(e) => { e.preventDefault(); onToggleOwnerLocation() }} className={btnClass} title={showOwnerLocation ? "Hide My Location" : "Show My Location"}>
+              <LocateFixed className={`${iconClass} ${showOwnerLocation ? "text-brand-primary dark:text-[#17b385]" : ""}`} />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -164,9 +168,10 @@ function FullScreenControl() {
  * FleetMap — Leaflet map showing all vehicle markers with smooth
  * real-time interpolation between GPS pings and breadcrumb route trails.
  */
-export default function FleetMap({ children, vehicles, locations, locationHistory, selectedVehicle, lastWsMessage, onInterpolatedPositions, ownerLocation, ownerUser }) {
+export default function FleetMap({ children, vehicles, locations, locationHistory, selectedVehicle, lastWsMessage, onInterpolatedPositions, ownerLocation, ownerUser, geofences, isDashboard, isDrawingGeofence, onCancelDrawing, onGeofenceDrawn, selectedGeofence, onGeofenceClick, showOwnerLocation, onToggleOwnerLocation }) {
   const [userCenter, setUserCenter] = useState(null)
-  const { isDarkMode } = useTheme()
+  const { isDarkMode, mapTheme } = useTheme()
+  const navigate = useNavigate()
 
   // Track interpolated positions so the Dashboard overlay can show live coords
   const interpolatedRef = useRef({})
@@ -229,48 +234,69 @@ export default function FleetMap({ children, vehicles, locations, locationHistor
       center={initialCenter}
       zoom={initialZoom}
       style={{ width: '100%', height: '100%' }}
-      zoomControl={true}
+      zoomControl={false}
       attributionControl={false}
     >
-      <ThemeTracker />
-      <FullScreenControl />
+      <CustomMapControls showOwnerLocation={showOwnerLocation} onToggleOwnerLocation={onToggleOwnerLocation} />
+      <GeofenceDrawer isDrawingGeofence={isDrawingGeofence} onCancelDrawing={onCancelDrawing} onGeofenceDrawn={onGeofenceDrawn} />
       
-      <LayersControl position="topright">
-        <LayersControl.BaseLayer checked={!isDarkMode} name="Satellite">
-          <LayerGroup>
-            <TileLayer
-              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            />
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-            />
-          </LayerGroup>
-        </LayersControl.BaseLayer>
-
-        <LayersControl.BaseLayer name="OpenStreetMap">
+      {mapTheme === 'Satellite' && (
+        <LayerGroup>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           />
-        </LayersControl.BaseLayer>
-
-        <LayersControl.BaseLayer checked={isDarkMode} name="Dark Mode">
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
           />
-        </LayersControl.BaseLayer>
+        </LayerGroup>
+      )}
 
-        <LayersControl.BaseLayer name="Light Mode">
-          <TileLayer
-            attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
-        </LayersControl.BaseLayer>
-      </LayersControl>
+      {mapTheme === 'OpenStreetMap' && (
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+      )}
+
+      {mapTheme === 'Dark Mode' && (
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
+      )}
+
+      {mapTheme === 'Light Mode' && (
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+      )}
 
       {flyTarget && <MapFlyTo vehicleId={selectedVehicle?.id} position={flyTarget} />}
+
+      {geofences && geofences.map(gf => {
+        const isSelected = selectedGeofence?.id === gf.id
+        const baseColor = gf.color || '#17b385'
+        
+        return (
+          <Polygon 
+            key={gf.id} 
+            positions={gf.coordinates} 
+            pathOptions={{ 
+              color: isSelected ? '#f59e0b' : baseColor, 
+              fillColor: isSelected ? '#f59e0b' : baseColor, 
+              fillOpacity: isSelected ? 0.4 : 0.2,
+              weight: isSelected ? 3 : 2
+            }}
+            eventHandlers={{
+              click: () => {
+                if (onGeofenceClick) onGeofenceClick(gf)
+              }
+            }}
+          />
+        )
+      })}
 
       {vehicles.map((vehicle) => {
         const loc = locations[vehicle.id]

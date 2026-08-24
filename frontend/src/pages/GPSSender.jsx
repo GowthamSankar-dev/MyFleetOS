@@ -389,7 +389,7 @@ export default function GPSSender() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors"
+      className="flex flex-col flex-1 bg-slate-50 dark:bg-slate-950 transition-colors min-h-full"
     >
       <div className="flex-1 p-4 md:p-6 flex flex-col justify-center">
         <div className="max-w-md mx-auto w-full space-y-4">
@@ -630,7 +630,7 @@ export default function GPSSender() {
             <Mail size={18} />
           </a>
         </div>
-        <p className="text-[11px]">&copy; {new Date().getFullYear()} FleetOS. All rights reserved.</p>
+        <p className="text-[11px]">&copy; {new Date().getFullYear()} myfleetOS. All rights reserved.</p>
       </footer>
     </motion.div>
   )

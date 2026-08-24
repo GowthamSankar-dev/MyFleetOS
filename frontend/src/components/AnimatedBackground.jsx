@@ -1,10 +1,11 @@
-import { motion } from 'framer-motion'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 
 export default function AnimatedBackground({ children, centerContent = true }) {
   const { isDarkMode } = useTheme()
+  const location = useLocation()
   // Center on a major city (New York)
   const center = [40.7128, -74.0060]
 
@@ -42,15 +43,9 @@ export default function AnimatedBackground({ children, centerContent = true }) {
       </div>
 
       {/* Content wrapper */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className={`relative z-10 w-full min-h-full ${centerContent ? 'flex items-center justify-center p-4' : ''}`}
-      >
+      <div className={`relative z-10 w-full min-h-full ${centerContent ? 'flex items-center justify-center p-4' : ''}`}>
         {children}
-      </motion.div>
+      </div>
     </div>
   )
 }

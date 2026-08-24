@@ -167,14 +167,16 @@ class Coordinate(BaseModel):
 
 class GeofenceCreate(BaseModel):
     """Payload to create a new geofence."""
-    name: str = Field(..., min_length=1, max_length=128, description="Geofence name")
+    name: str = Field(..., max_length=128)
+    color: str = Field(default="#17b385", max_length=32)
     coordinates: list[Coordinate] = Field(..., min_length=3, description="List of coordinates forming the polygon")
 
 class GeofenceResponse(BaseModel):
-    """Geofence info returned to client."""
+    """Geofence response model."""
     id: int
     user_id: int
     name: str
+    color: str
     coordinates: list[Coordinate]
     created_at: datetime
 

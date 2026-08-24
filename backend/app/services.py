@@ -129,35 +129,56 @@ async def record_location(
 
     ts = payload.timestamp or datetime.now(timezone.utc)
     
-    # Check geofence logic
-    if vehicle.geofence_id:
-        geofence = await get_geofence(db, vehicle.geofence_id)
-        if geofence:
-            is_currently_inside = is_point_in_polygon({"lat": payload.latitude, "lng": payload.longitude}, geofence.coordinates)
-            
-            # Check previous location
-            prev_loc = await get_latest_location(db, vehicle.id)
-            if prev_loc:
-                was_inside = is_point_in_polygon({"lat": prev_loc.latitude, "lng": prev_loc.longitude}, geofence.coordinates)
-                
-                if was_inside and not is_currently_inside:
-                    # Vehicle just left the geofence
-                    alert_data = {
-                        "event": "geofence_alert",
-                        "vehicle_id": vehicle.id,
-                        "vehicle_name": vehicle.name,
-                        "zone_name": geofence.name,
-                        "message": f"{vehicle.name} left zone {geofence.name}",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                    asyncio.create_task(manager.broadcast(alert_data))
-                    
-                    if vehicle.user and vehicle.user.email:
-                        # Call synchronously in a task if it's slow, but it's okay for MVP
-                        # email_utils uses httpx.post synchronously! Oh wait, httpx.post is synchronous in email_utils.
-                        # It will block the async loop. So we should run it in a thread.
-                        loop = asyncio.get_running_loop()
-                        loop.run_in_executor(None, send_geofence_alert_email, vehicle.user.email, vehicle.name, geofence.name)
+    # Auto-assign geofence logic
+    all_user_geofences = await list_geofences(db, vehicle.user_id)
+    current_point = {"lat": payload.latitude, "lng": payload.longitude}
+    
+    inside_geofence = None
+    for gf in all_user_geofences:
+        if is_point_in_polygon(current_point, gf.coordinates):
+            inside_geofence = gf
+            break
+
+    inside_geofence_id = inside_geofence.id if inside_geofence else None
+
+    if vehicle.geofence_id != inside_geofence_id:
+        if vehicle.geofence_id:
+            # Check if we need to fire a 'left zone' alert
+            old_geofence = await get_geofence(db, vehicle.geofence_id)
+            if old_geofence:
+                prev_loc = await get_latest_location(db, vehicle.id)
+                if prev_loc:
+                    was_inside = is_point_in_polygon({"lat": prev_loc.latitude, "lng": prev_loc.longitude}, old_geofence.coordinates)
+                    if was_inside:
+                        # Vehicle just left the old geofence
+                        alert_data = {
+                            "event": "geofence_alert",
+                            "vehicle_id": vehicle.id,
+                            "vehicle_name": vehicle.name,
+                            "zone_name": old_geofence.name,
+                            "message": f"{vehicle.name} left zone {old_geofence.name}",
+                            "timestamp": datetime.now(timezone.utc).isoformat()
+                        }
+                        asyncio.create_task(manager.broadcast(alert_data))
+                        
+                        if vehicle.user and vehicle.user.email:
+                            loop = asyncio.get_running_loop()
+                            loop.run_in_executor(None, send_geofence_alert_email, vehicle.user.email, vehicle.name, old_geofence.name)
+        
+        if inside_geofence_id and inside_geofence:
+            # Vehicle just entered a new geofence
+            alert_data = {
+                "event": "geofence_alert",
+                "vehicle_id": vehicle.id,
+                "vehicle_name": vehicle.name,
+                "zone_name": inside_geofence.name,
+                "message": f"{vehicle.name} entered zone {inside_geofence.name}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            asyncio.create_task(manager.broadcast(alert_data))
+
+    # Auto-assign or unassign
+    vehicle.geofence_id = inside_geofence_id
 
 
     location = Location(
@@ -594,11 +615,25 @@ async def create_geofence(db: AsyncSession, user_id: int, payload: GeofenceCreat
     geofence = Geofence(
         user_id=user_id,
         name=payload.name,
+        color=payload.color,
         coordinates=coords_dict
     )
     db.add(geofence)
     await db.commit()
     await db.refresh(geofence)
+
+    # Auto-assign vehicles currently inside the new geofence
+    result = await db.execute(select(Vehicle).where(Vehicle.user_id == user_id))
+    vehicles = result.scalars().all()
+    for v in vehicles:
+        loc = await get_latest_location(db, v.id)
+        if loc:
+            if is_point_in_polygon({"lat": loc.latitude, "lng": loc.longitude}, coords_dict):
+                v.geofence_id = geofence.id
+    
+    if vehicles:
+        await db.commit()
+
     return geofence
 
 async def delete_geofence(db: AsyncSession, geofence_id: int, user_id: int) -> bool:

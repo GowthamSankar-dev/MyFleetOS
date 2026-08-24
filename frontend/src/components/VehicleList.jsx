@@ -1,11 +1,12 @@
-import { RefreshCw, Search, Trash2 } from 'lucide-react'
+import { RefreshCw, Search, Trash2, Github, Linkedin, Mail } from 'lucide-react'
 import { useState } from 'react'
 import VehicleCard from './VehicleCard'
+import { FenceIcon } from './icons/FenceIcon'
 
 /**
  * VehicleList — scrollable panel listing tracked vehicles.
  */
-export default function VehicleList({ vehicles, locations, selectedVehicle, onSelect, onEdit, onDelete, onClearUnlinked, onRefresh, isLoading }) {
+export default function VehicleList({ vehicles, locations, selectedVehicle, onSelect, onEdit, onDelete, onClearUnlinked, onRefresh, isLoading, onToggleView }) {
   const [query, setQuery] = useState('')
 
   const unlinkedCount = vehicles.filter((v) => v.user_id === null).length
@@ -29,6 +30,13 @@ export default function VehicleList({ vehicles, locations, selectedVehicle, onSe
             </span>
           </h2>
           <div className="flex items-center gap-1">
+            <button
+              onClick={onToggleView}
+              className="p-1.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-1"
+              title="Manage Geofences"
+            >
+              <FenceIcon className="w-3.5 h-3.5" />
+            </button>
             {unlinkedCount > 0 && onClearUnlinked && (
               <button
                 onClick={onClearUnlinked}
@@ -91,6 +99,21 @@ export default function VehicleList({ vehicles, locations, selectedVehicle, onSe
             />
           ))
         )}
+      </div>
+
+      {/* ── Social Links Footer ────────────────────────────────────────── */}
+      <div className="hidden md:block p-3 shrink-0 transition-colors">
+        <div className="flex items-center justify-center gap-4">
+          <a href="https://github.com/GowthamSankar-dev" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="GitHub">
+            <Github size={16} />
+          </a>
+          <a href="https://www.linkedin.com/in/gowtham-sankar-b141b6351/" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="LinkedIn">
+            <Linkedin size={16} />
+          </a>
+          <a href="mailto:gowthamsankarjayaraman@gmail.com" className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Email">
+            <Mail size={16} />
+          </a>
+        </div>
       </div>
     </div>
   )

@@ -45,7 +45,7 @@ def send_otp_email(to_email: str, otp: str, purpose: str) -> bool:
     subject, html_body, plain_body = _build_email_content(otp, purpose)
 
     msg = EmailMessage()
-    msg['From'] = f"FleetOS <{sender}>"
+    msg['From'] = f"myfleetOS <{sender}>"
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.set_content(plain_body)                      # plain-text fallback
@@ -77,29 +77,29 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
     """Return (subject, html_body, plain_text_body) for the given OTP purpose."""
 
     if purpose == "register":
-        subject = "Verify your FleetOS account"
+        subject = "Verify your myfleetOS account"
         heading = "Confirm your email"
         subheading = "You're almost there! Use the code below to complete your registration."
         action_label = "Registration Code"
-        footer_note = "You're receiving this because someone tried to create a FleetOS account with this email address."
+        footer_note = "You're receiving this because someone tried to create a myfleetOS account with this email address."
     elif purpose == "login":
-        subject = "Your FleetOS login code"
+        subject = "Your myfleetOS login code"
         heading = "Sign-in verification"
         subheading = "Use the code below to complete your passwordless sign-in. It expires in 10 minutes."
         action_label = "Login Code"
-        footer_note = "You're receiving this because a sign-in was requested for your FleetOS account."
+        footer_note = "You're receiving this because a sign-in was requested for your myfleetOS account."
     elif purpose == "reset":
-        subject = "Reset your FleetOS password"
+        subject = "Reset your myfleetOS password"
         heading = "Password reset request"
         subheading = "We received a request to reset your password. Use the code below to continue."
         action_label = "Password Reset Code"
         footer_note = "If you didn't request a password reset, you can safely ignore this email."
     else:
-        subject = "Your FleetOS verification code"
+        subject = "Your myfleetOS verification code"
         heading = "Verification code"
         subheading = "Use the code below to verify your action. It expires in 10 minutes."
         action_label = "Verification Code"
-        footer_note = "You're receiving this from FleetOS."
+        footer_note = "You're receiving this from myfleetOS."
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -161,7 +161,7 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
 
               <!-- Security Warning -->
               <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">
-                &#128274;&nbsp; <strong style="color:#94a3b8;">Security tip:</strong> FleetOS will never ask for your OTP via phone, chat, or any other channel. Only enter this code on the official FleetOS website.
+                &#128274;&nbsp; <strong style="color:#94a3b8;">Security tip:</strong> myfleetOS will never ask for your OTP via phone, chat, or any other channel. Only enter this code on the official myfleetOS website.
               </p>
 
             </td>
@@ -172,7 +172,7 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
             <td align="center" style="padding-top:28px;">
               <p style="margin:0 0 6px 0;font-size:12px;color:#475569;">{footer_note}</p>
               <p style="margin:0;font-size:12px;color:#334155;">
-                &copy; 2025 FleetOS &nbsp;&middot;&nbsp; Real-time Fleet Tracking
+                &copy; 2025 myfleetOS &nbsp;&middot;&nbsp; Real-time Fleet Tracking
               </p>
             </td>
           </tr>
@@ -194,7 +194,7 @@ This code expires in 10 minutes. Do not share it with anyone.
 
 ---
 {footer_note}
-© 2025 FleetOS — Real-time Fleet Tracking
+© 2025 myfleetOS — Real-time Fleet Tracking
 """
     return subject, html_body, plain_body
 
@@ -218,9 +218,9 @@ def send_geofence_alert_email(to_email: str, vehicle_name: str, zone_name: str) 
     
 Your vehicle "{vehicle_name}" has just left the designated geofence zone "{zone_name}".
 
-Please check your FleetOS dashboard for live tracking.
+Please check your myfleetOS dashboard for live tracking.
 
-© 2025 FleetOS — Real-time Fleet Tracking"""
+© 2025 myfleetOS — Real-time Fleet Tracking"""
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -232,7 +232,7 @@ Please check your FleetOS dashboard for live tracking.
 </html>"""
 
     msg = EmailMessage()
-    msg['From'] = f"FleetOS Alerts <{sender}>"
+    msg['From'] = f"myfleetOS Alerts <{sender}>"
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.set_content(plain_body)

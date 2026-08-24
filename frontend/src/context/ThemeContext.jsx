@@ -24,10 +24,18 @@ export function ThemeProvider({ children }) {
     }
   }, [isDarkMode])
 
+  const [mapTheme, setMapTheme] = useState(() => {
+    return localStorage.getItem('fleetos_map_theme') || 'Satellite'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('fleetos_map_theme', mapTheme)
+  }, [mapTheme])
+
   const toggleTheme = () => setIsDarkMode(prev => !prev)
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, mapTheme, setMapTheme }}>
       {children}
     </ThemeContext.Provider>
   )

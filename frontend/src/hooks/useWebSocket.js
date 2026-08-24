@@ -49,7 +49,7 @@ export function useWebSocket() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
-          if (data.event === 'location_update' || data.event === 'device_offline') {
+          if (data.event === 'location_update' || data.event === 'device_offline' || data.event === 'geofence_alert') {
             setLastMessage(data)
           }
         } catch (err) {

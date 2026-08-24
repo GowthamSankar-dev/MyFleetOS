@@ -4,7 +4,6 @@ import { Lock, Mail, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { requestOtpLogin, verifyOtpLogin } from '../api/fleetApi'
 import OTPInput from '../components/OTPInput'
-import AnimatedBackground from '../components/AnimatedBackground'
 
 export default function Login() {
   const [mode, setMode] = useState('password') // 'password' or 'otp'
@@ -76,12 +75,12 @@ export default function Login() {
   }
 
   return (
-    <AnimatedBackground>
+    <>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm max-w-md w-full p-8 transition-colors">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-24 h-24 mb-3 transition-colors">
-            <img src="/logo.png" alt="Fleet OS" className="w-full h-full object-contain" />
+          <div className="mb-3 transition-colors">
+            <img src="/logo.png" alt="myfleetOS" className="h-8 w-auto object-contain" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Sign in to Fleet Tracker</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Manage your private vehicles and live GPS tracking</p>
@@ -220,6 +219,6 @@ export default function Login() {
           </Link>
         </div>
       </div>
-    </AnimatedBackground>
+    </>
   )
 }

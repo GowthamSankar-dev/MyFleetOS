@@ -4,7 +4,6 @@ import { Lock, Mail, User, AlertCircle, CheckCircle, Eye, EyeOff, Building2, Car
 import { useAuth } from '../context/AuthContext'
 import { requestRegisterOtp, checkHealth } from '../api/fleetApi'
 import OTPInput from '../components/OTPInput'
-import AnimatedBackground from '../components/AnimatedBackground'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1: Form, 2: OTP
@@ -124,12 +123,12 @@ export default function Register() {
   }
 
   return (
-    <AnimatedBackground>
+    <>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm max-w-md w-full p-8 transition-colors">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-24 h-24 mb-3 transition-colors">
-            <img src="/logo.png" alt="Fleet OS" className="w-full h-full object-contain" />
+          <div className="mb-3 transition-colors">
+            <img src="/logo.png" alt="myfleetOS" className="h-8 w-auto object-contain" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Create your Account</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Start tracking your private vehicles live</p>
@@ -305,6 +304,6 @@ export default function Register() {
           </Link>
         </div>
       </div>
-    </AnimatedBackground>
+    </>
   )
 }

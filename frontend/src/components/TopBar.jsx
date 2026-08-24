@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Activity, Navigation, Plus, X, QrCode, Copy, Check, LogOut, User as UserIcon, AlertCircle, Menu, Settings, Moon, Sun, Bell } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
+import { Activity, Navigation, Plus, X, QrCode, Copy, Check, LogOut, User as UserIcon, AlertCircle, Menu, Settings, Moon, Sun, Bell, LayoutDashboard, Truck } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../context/AuthContext'
 import { getAvatarUrl, fetchPairingRequests } from '../api/fleetApi'
 import { useTheme } from '../context/ThemeContext'
 import SettingsModal from './SettingsModal'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
@@ -32,6 +33,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
   
   // Notifications state
   const [notifications, setNotifications] = useState([])
+  const [activeToasts, setActiveToasts] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   
   const { user, logout } = useAuth()
@@ -80,6 +82,14 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
         read: false
       }
       setNotifications(prev => [newAlert, ...prev].slice(0, 50)) // keep last 50
+      
+      // Add to toasts
+      setActiveToasts(prev => [...prev, newAlert])
+      
+      // Auto-remove toast after 5s
+      setTimeout(() => {
+        setActiveToasts(prev => prev.filter(t => t.id !== newAlert.id))
+      }, 5000)
     }
   }, [lastMessage, user])
 
@@ -130,61 +140,74 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
 
   return (
     <>
-      <header className="flex items-center justify-between px-3.5 py-2.5 md:px-6 md:py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 transition-colors">
-        <div className="flex items-center gap-3">
-          {/* Mobile Menu Button */}
-          {onToggleMobileMenu && (
-            <button
-              onClick={onToggleMobileMenu}
-              className="md:hidden p-1.5 rounded text-slate-600 dark:text-[#17b385] hover:text-slate-900 dark:hover:text-[#14a076] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="Open Navigation"
-            >
-              <Menu size={20} />
-            </button>
-          )}
-
-          <div>
-            <h1 className="text-sm md:text-base font-bold text-slate-900 dark:text-white leading-tight">{title}</h1>
-            {user?.role !== 'driver' && (
-              <p className="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {lastTime
-                  ? `Last ping: ${lastTime}`
-                  : 'Waiting for GPS data…'}
-              </p>
+      <header className="relative flex items-center justify-between px-3.5 py-2.5 md:p-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 transition-colors">
+        {/* Left Section (Map width) */}
+        <div className="flex items-center justify-between md:flex-1 md:px-6 md:py-3.5 md:border-r border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 md:flex-1">
+            {/* Mobile Menu Button */}
+            {onToggleMobileMenu && (
+              <button
+                onClick={onToggleMobileMenu}
+                className="md:hidden p-1.5 rounded text-slate-600 dark:text-[#17b385] hover:text-slate-900 dark:hover:text-[#14a076] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Open Navigation"
+              >
+                <Menu size={20} />
+              </button>
             )}
+
+            {/* Logo */}
+            <div className="w-20 h-7 md:w-24 md:h-8 shrink-0 flex items-center justify-center transition-colors">
+              <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
+            </div>
           </div>
+
+          {/* Desktop Navigation */}
+          {user?.role !== 'driver' && (
+            <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-2 justify-center shrink-0 z-10">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-brand-primary/10 dark:bg-[#17b385]/10 text-brand-primary dark:text-[#17b385] font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`
+                }
+              >
+                <LayoutDashboard size={16} />
+                <span>Dashboard</span>
+              </NavLink>
+              <NavLink
+                to="/vehicles"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-brand-primary/10 dark:bg-[#17b385]/10 text-brand-primary dark:text-[#17b385] font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`
+                }
+              >
+                <Truck size={16} />
+                <span>Vehicles</span>
+              </NavLink>
+            </nav>
+          )}
+          
+          {/* Empty spacer to keep nav perfectly centered */}
+          <div className="hidden md:block flex-1" />
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* Activity flash on new message */}
-          {lastMessage && user?.role !== 'driver' && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-emerald-600 mr-1">
-              <Activity size={13} key={lastMessage.timestamp} className="animate-fade-in" />
-              <span>Ping received</span>
-            </div>
-          )}
-
+        {/* Right Section (Sidebar width) */}
+        <div className="flex items-center justify-end md:w-80 shrink-0 md:px-6 md:py-3.5 gap-2 md:gap-4">
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer mr-1"
+            className="p-1.5 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-
-          {/* Connect GPS button */}
-          {user?.role !== 'driver' && (
-            <button
-              id="connect-phone-btn"
-              onClick={handleConnectClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded text-xs font-semibold
-                         bg-brand-primary dark:bg-[#17b385] text-white hover:bg-brand-primary/90 dark:hover:bg-[#14a076] transition-colors shadow-sm cursor-pointer mr-1 md:mr-2"
-            >
-              <Plus size={16} className="sm:w-[13px] sm:h-[13px]" />
-              <span className="hidden sm:inline">Connect GPS</span>
-            </button>
-          )}
 
           {/* Notifications Button */}
           {user?.role !== 'driver' && (
@@ -249,11 +272,11 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                                   </p>
                                   {n.type === 'pair' && (
                                     <Link 
-                                      to="/requests" 
+                                      to="/vehicles" 
                                       onClick={() => setShowNotifications(false)}
                                       className="inline-block mt-2 text-[11px] font-semibold text-brand-primary dark:text-[#17b385] hover:underline"
                                     >
-                                      View Requests →
+                                      Go to Vehicles to approve →
                                     </Link>
                                   )}
                                 </div>
@@ -267,6 +290,19 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                 </>
               )}
             </div>
+          )}
+
+          {/* Connect GPS button */}
+          {user?.role !== 'driver' && (
+            <button
+              id="connect-phone-btn"
+              onClick={handleConnectClick}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded text-xs font-semibold
+                         bg-brand-primary dark:bg-[#17b385] text-white hover:bg-brand-primary/90 dark:hover:bg-[#14a076] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <Plus size={16} className="sm:w-[13px] sm:h-[13px] shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Connect GPS</span>
+            </button>
           )}
 
           {/* User Profile / Login (Rightmost Top Bar) */}
@@ -514,7 +550,35 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
 
       {/* ── Settings Modal ─────────────────────────────────────────────── */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      
+      {/* Toast Notifications */}
+      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+        <AnimatePresence>
+          {activeToasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-slate-900 dark:bg-slate-800 text-white shadow-xl rounded-lg px-4 py-3 min-w-[280px] max-w-sm border border-slate-700 pointer-events-auto flex items-start gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-brand-primary/20 text-brand-primary flex items-center justify-center shrink-0 mt-0.5">
+                <Bell size={16} className="animate-bounce" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-white mb-0.5">Geofence Alert</h4>
+                <p className="text-xs text-slate-300 leading-relaxed break-words">{toast.text}</p>
+              </div>
+              <button 
+                onClick={() => setActiveToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </>
   )
 }
-

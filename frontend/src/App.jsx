@@ -5,14 +5,13 @@ import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import Dashboard from './pages/Dashboard'
 import Vehicles from './pages/Vehicles'
-import PairingRequests from './pages/PairingRequests'
-import Geofences from './pages/Geofences'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ShareView from './pages/ShareView'
 import GPSSender from './pages/GPSSender'
 import Landing from './pages/Landing'
+import AuthLayout from './components/AuthLayout'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useVehicles } from './hooks/useVehicles'
 import { useAuth } from './context/AuthContext'
@@ -38,7 +37,7 @@ export default function App() {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999]">
         <img src="/globe.svg" alt="Loading..." className="w-16 h-16 mb-6 opacity-80" />
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">FleetOS</h1>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">myfleetOS</h1>
         <p className="text-sm font-medium text-slate-500">Starting engine...</p>
       </div>
     )
@@ -60,19 +59,19 @@ export default function App() {
       {/* Public Share View */}
       <Route path="/share/:shareCode" element={<ShareView />} />
 
-      {/* Auth Pages */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-
       {/* Main Dashboard Layout */}
       <Route
         path="/*"
         element={
           !user ? (
-            <Routes location={location} key={location.pathname}>
-              <Route index element={<Landing />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+            <Routes>
+              <Route element={<AuthLayout />}>
+                <Route index element={<Landing />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
             </Routes>
           ) : user.role === 'driver' ? (
             <div className="flex flex-col fixed inset-0 overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors">
@@ -81,7 +80,7 @@ export default function App() {
                 isConnected={isConnected}
                 lastMessage={lastMessage}
               />
-              <main className="flex-1 overflow-y-auto relative min-h-0">
+              <main className="flex flex-col flex-1 overflow-y-auto relative min-h-0">
                 <Routes location={location} key={location.pathname}>
                   <Route path="gps" element={<GPSSender />} />
                   <Route path="*" element={<Navigate to="/gps" replace />} />
@@ -143,30 +142,7 @@ export default function App() {
                         />
                       }
                     />
-                    <Route
-                      path="requests"
-                      element={
-                        <PairingRequests
-                          isConnected={isConnected}
-                          lastMessage={lastMessage}
-                          onRefresh={handleRefresh}
-                          onToggleMobileMenu={toggleMobileMenu}
-                        />
-                      }
-                    />
-                    <Route
-                      path="geofences"
-                      element={
-                        <Geofences
-                          vehicles={vehicles}
-                          locations={locations}
-                          isConnected={isConnected}
-                          lastMessage={lastMessage}
-                          onRefresh={handleRefresh}
-                          onToggleMobileMenu={toggleMobileMenu}
-                        />
-                      }
-                    />
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AnimatePresence>

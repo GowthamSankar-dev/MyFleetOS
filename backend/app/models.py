@@ -125,6 +125,7 @@ class Geofence(Base):
         BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
+    color: Mapped[str] = mapped_column(String(32), default="#17b385", server_default="#17b385", nullable=False)
     coordinates: Mapped[list] = mapped_column(JSON, nullable=False)  # stores array of {lat, lng} or [lng, lat]
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

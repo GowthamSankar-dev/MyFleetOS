@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { requestPasswordReset, resetPassword } from '../api/fleetApi'
 import OTPInput from '../components/OTPInput'
-import AnimatedBackground from '../components/AnimatedBackground'
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1) // 1: Email, 2: OTP, 3: New Passwords
@@ -72,11 +71,11 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AnimatedBackground>
+    <>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm max-w-md w-full p-8 transition-colors">
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-16 h-16 mb-2">
-            <img src="/logo.png" alt="Fleet OS" className="w-full h-full object-contain" />
+            <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Reset Password</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -226,6 +225,6 @@ export default function ForgotPassword() {
           </Link>
         </div>
       </div>
-    </AnimatedBackground>
+    </>
   )
 }

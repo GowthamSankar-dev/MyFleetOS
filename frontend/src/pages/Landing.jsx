@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Map, MapPin, Shield, Zap, ChevronRight, Moon, Sun, Github, Linkedin, Mail } from 'lucide-react'
-import AnimatedBackground from '../components/AnimatedBackground'
 import { useTheme } from '../context/ThemeContext'
 import { FenceIcon } from '../components/icons/FenceIcon'
 
@@ -31,13 +30,13 @@ export default function Landing() {
   ]
 
   return (
-    <AnimatedBackground centerContent={false}>
+    <>
       <div className="min-h-screen w-full flex flex-col pt-6 pb-20">
         
         {/* Navigation Bar */}
         <nav className="w-full max-w-6xl mx-auto px-6 flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Fleet OS" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]" />
+            <img src="/logo.png" alt="myfleetOS" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]" />
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -106,12 +105,6 @@ export default function Landing() {
               Start tracking for free
               <ChevronRight size={16} />
             </Link>
-            <Link 
-              to="/login" 
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-8 py-3.5 rounded font-bold text-sm shadow-sm hover:shadow-md transition-all hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              Owner Login
-            </Link>
           </motion.div>
         </main>
 
@@ -142,7 +135,7 @@ export default function Landing() {
 
         {/* Footer */}
         <footer className="w-full max-w-6xl mx-auto px-6 mt-16 md:mt-24 pt-6 border-t border-slate-200/50 dark:border-slate-800/50 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-          <p>© {new Date().getFullYear()} FleetOS. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} myfleetOS. All rights reserved.</p>
           <div className="flex items-center gap-4 mt-4 sm:mt-0">
             <a href="https://github.com/GowthamSankar-dev" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors" title="GitHub">
               <Github size={18} />
@@ -157,6 +150,6 @@ export default function Landing() {
         </footer>
 
       </div>
-    </AnimatedBackground>
+    </>
   )
 }
