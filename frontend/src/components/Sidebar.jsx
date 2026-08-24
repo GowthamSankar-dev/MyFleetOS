@@ -75,10 +75,12 @@ export default function Sidebar({ isConnected, vehicleCount, isOpen, onClose }) 
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-56 transition-colors">
       {/* ── Logo & Header ────────────────────────────────────────────────── */}
       <div className="relative flex flex-col items-center justify-center px-5 py-6 border-b border-slate-200 dark:border-slate-800">
-        <div className="w-24 h-8 shrink-0 flex items-center justify-center transition-colors">
+        <div className="w-12 h-12 shrink-0 flex items-center justify-center transition-colors">
           <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">GPS Control Panel</p>
+        <p className="font-bold text-lg tracking-tight text-[#06375d] dark:text-[#14a076] mt-2">
+          MyFleetOS
+        </p>
         {/* Mobile close button */}
         <button
           onClick={onClose}

@@ -37,10 +37,10 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999]">
+      <div className="fixed inset-0 bg-white dark:bg-slate-950 flex flex-col items-center justify-center z-[9999] transition-colors">
         <GlobeLoader className="w-16 h-16 mb-6 opacity-80" />
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">myfleetOS</h1>
-        <p className="text-sm font-medium text-slate-500">Starting engine...</p>
+        <h1 className="text-2xl font-bold tracking-tight mb-2 text-[#06375d] dark:text-[#14a076]">MyFleetOS</h1>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Starting engine...</p>
       </div>
     )
   }
