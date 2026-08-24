@@ -62,6 +62,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     account_code: str
     role: str = 'owner'
+    is_recording_enabled: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -103,13 +104,31 @@ class LocationCreate(BaseModel):
 class LocationResponse(BaseModel):
     """Single location record returned to the client."""
 
-    id: int
+    id: int | None = None
     vehicle_id: int
     latitude: float
     longitude: float
     timestamp: datetime
+    session_id: int | None = None
 
     model_config = {"from_attributes": True}
+
+
+class TrackingSessionResponse(BaseModel):
+    """A period of active tracking for a vehicle."""
+    id: int
+    vehicle_id: int
+    name: str | None = None
+    start_time: datetime
+    end_time: datetime | None = None
+    status: str
+
+    model_config = {"from_attributes": True}
+
+
+class TrackingSessionUpdate(BaseModel):
+    """Payload to rename a tracking session."""
+    name: str | None = Field(default=None, max_length=128)
 
 
 # ── Vehicle schemas ─────────────────────────────────────────────────────────

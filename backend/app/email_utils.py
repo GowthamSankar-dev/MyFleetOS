@@ -108,79 +108,17 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-
-          <!-- Logo / Brand Header -->
-          <tr>
-            <td align="center" style="padding-bottom:32px;">
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:linear-gradient(135deg,#0ea5e9,#14b8a6);border-radius:16px;padding:12px 24px;">
-                    <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
-                      Fleet<span style="color:#a7f3d0;">OS</span>
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Card -->
-          <tr>
-            <td style="background-color:#1e293b;border-radius:20px;padding:40px 36px;border:1px solid #334155;">
-
-              <!-- Heading -->
-              <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:700;color:#f1f5f9;letter-spacing:-0.3px;">{heading}</h1>
-              <p style="margin:0 0 32px 0;font-size:15px;color:#94a3b8;line-height:1.6;">{subheading}</p>
-
-              <!-- OTP Label -->
-              <p style="margin:0 0 10px 0;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;">{action_label}</p>
-
-              <!-- OTP Box -->
-              <div style="background-color:#0f172a;border:2px solid #0ea5e9;border-radius:14px;padding:24px;text-align:center;margin-bottom:28px;">
-                <span style="font-size:42px;font-weight:800;letter-spacing:12px;color:#e2e8f0;font-family:'Courier New',Courier,monospace;">{otp}</span>
-              </div>
-
-              <!-- Expiry Notice -->
-              <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:28px;">
-                <tr>
-                  <td style="background-color:#172554;border-left:3px solid #3b82f6;border-radius:0 10px 10px 0;padding:12px 16px;">
-                    <p style="margin:0;font-size:13px;color:#93c5fd;">
-                      &#9201;&nbsp; This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Divider -->
-              <hr style="border:none;border-top:1px solid #334155;margin:0 0 24px 0;" />
-
-              <!-- Security Warning -->
-              <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">
-                &#128274;&nbsp; <strong style="color:#94a3b8;">Security tip:</strong> myfleetOS will never ask for your OTP via phone, chat, or any other channel. Only enter this code on the official myfleetOS website.
-              </p>
-
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding-top:28px;">
-              <p style="margin:0 0 6px 0;font-size:12px;color:#475569;">{footer_note}</p>
-              <p style="margin:0;font-size:12px;color:#334155;">
-                &copy; 2025 myfleetOS &nbsp;&middot;&nbsp; Real-time Fleet Tracking
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="font-family: sans-serif; color: #333; line-height: 1.5; padding: 20px;">
+  <div style="max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+    <h2>{heading}</h2>
+    <p>{subheading}</p>
+    <p><strong>{action_label}:</strong></p>
+    <h1 style="font-size: 32px; letter-spacing: 5px; color: #000;">{otp}</h1>
+    <p style="font-size: 14px; color: #555;">This code expires in 10 minutes. Do not share it with anyone.</p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+    <p style="font-size: 12px; color: #777;">{footer_note}</p>
+    <p style="font-size: 12px; color: #777;">&copy; 2025 myfleetOS</p>
+  </div>
 </body>
 </html>"""
 

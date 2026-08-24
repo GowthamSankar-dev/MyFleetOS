@@ -74,8 +74,11 @@ export default function ForgotPassword() {
     <>
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm max-w-md w-full p-8 transition-colors">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-16 h-16 mb-2">
-            <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
+          <div className="mb-4 flex flex-col items-center gap-1 transition-colors">
+            <img src="/logo.png" alt="myfleetOS icon" className="h-14 w-auto object-contain" />
+            <span className="font-bold text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
+              MyFleetOS
+            </span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Reset Password</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">

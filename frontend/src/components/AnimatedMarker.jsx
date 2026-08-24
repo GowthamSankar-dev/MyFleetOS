@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react'
-import { Marker, Popup } from 'react-leaflet'
+import { Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { formatDistanceToNow } from 'date-fns'
 import { BASE_URL, getAvatarUrl } from '../api/fleetApi'
@@ -110,8 +110,10 @@ export default function AnimatedMarker({
   vehicle,
   location,
   isSelected,
+  isFollowed,
   onInterpolatedPosition,
 }) {
+  const map = useMap()
   const markerRef = useRef(null)
   const animationRef = useRef(null)
 
@@ -237,6 +239,11 @@ export default function AnimatedMarker({
           if (inner) inner.style.transform = `rotate(${rot}deg)`
         }
 
+        // Auto-follow logic
+        if (isFollowed) {
+          map.setView([lat, lng], map.getZoom(), { animate: false })
+        }
+
         if (onInterpolatedPosition && (now - lastCallbackTime > CALLBACK_THROTTLE_MS)) {
           lastCallbackTime = now
           onInterpolatedPosition(vehicle.id, lat, lng)
@@ -254,7 +261,7 @@ export default function AnimatedMarker({
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [vehicle.id, onInterpolatedPosition])
+  }, [vehicle.id, onInterpolatedPosition, isFollowed, map])
 
   const initialPos = location
     ? [location.latitude, location.longitude]
@@ -285,9 +292,6 @@ export default function AnimatedMarker({
 
           <p style={{ fontWeight: 700, fontSize: '13px', color: '#0F172A', marginBottom: '2px' }}>
             {vehicle.name}
-          </p>
-          <p style={{ fontSize: '11px', color: '#64748B', fontFamily: 'monospace', marginBottom: '6px' }}>
-            {vehicle.device_id}
           </p>
           {!driverAvatarUrl && <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '6px 0' }} />}
           <p style={{ fontSize: '11px', color: '#334155', fontWeight: 500 }}>

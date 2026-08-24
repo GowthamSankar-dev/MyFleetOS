@@ -7,6 +7,17 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      borderRadius: {
+        'none': '0',
+        'sm': '0.25rem',
+        DEFAULT: '0.25rem',
+        'md': '0.25rem',
+        'lg': '0.25rem',
+        'xl': '0.25rem',
+        '2xl': '0.25rem',
+        '3xl': '0.25rem',
+        'full': '9999px',
+      },
       colors: {
         // Fleet brand palette
         brand: {

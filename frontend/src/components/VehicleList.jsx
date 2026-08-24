@@ -2,11 +2,12 @@ import { RefreshCw, Search, Trash2, Github, Linkedin, Mail } from 'lucide-react'
 import { useState } from 'react'
 import VehicleCard from './VehicleCard'
 import { FenceIcon } from './icons/FenceIcon'
+import GlobeLoader from './GlobeLoader'
 
 /**
  * VehicleList — scrollable panel listing tracked vehicles.
  */
-export default function VehicleList({ vehicles, locations, selectedVehicle, onSelect, onEdit, onDelete, onClearUnlinked, onRefresh, isLoading, onToggleView }) {
+export default function VehicleList({ vehicles, locations, selectedVehicle, followedVehicleId, onSelect, onToggleFollow, onEdit, onDelete, onClearUnlinked, onRefresh, isLoading, onToggleView, onPlaybackSession }) {
   const [query, setQuery] = useState('')
 
   const unlinkedCount = vehicles.filter((v) => v.user_id === null).length
@@ -22,10 +23,10 @@ export default function VehicleList({ vehicles, locations, selectedVehicle, onSe
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="px-4 pt-4 pb-3 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
             Vehicles & Devices
-            <span className="ml-1.5 text-xs text-slate-500 font-medium">
+            <span className="ml-2 text-sm text-slate-500 font-medium">
               ({vehicles.length})
             </span>
           </h2>
@@ -71,10 +72,10 @@ export default function VehicleList({ vehicles, locations, selectedVehicle, onSe
       </div>
 
       {/* ── Vehicle cards ──────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
-            <img src="/globe.svg" alt="Loading..." className="w-8 h-8 mb-2 opacity-70" />
+            <GlobeLoader className="w-8 h-8 mb-2 opacity-70" />
             <p className="text-xs">Loading vehicles…</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -93,9 +94,12 @@ export default function VehicleList({ vehicles, locations, selectedVehicle, onSe
               vehicle={vehicle}
               location={locations[vehicle.id]}
               isSelected={selectedVehicle?.id === vehicle.id}
+              isFollowed={followedVehicleId === vehicle.id}
               onSelect={onSelect}
+              onToggleFollow={onToggleFollow}
               onEdit={onEdit}
               onDelete={onDelete}
+              onPlaybackSession={onPlaybackSession}
             />
           ))
         )}

@@ -9,7 +9,7 @@ import EditVehicleModal from '../components/EditVehicleModal'
 import DeleteVehicleModal from '../components/DeleteVehicleModal'
 import AddGeofenceModal from '../components/AddGeofenceModal'
 import DeleteGeofenceModal from '../components/DeleteGeofenceModal'
-import { deleteVehicle, deleteUnlinkedVehicles, fetchGeofences, createGeofence, deleteGeofence } from '../api/fleetApi'
+import { deleteVehicle, deleteUnlinkedVehicles, fetchGeofences, createGeofence, deleteGeofence, fetchSessionLocations } from '../api/fleetApi'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 
@@ -21,6 +21,7 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
   const navigate = useNavigate()
   
   const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [followedVehicleId, setFollowedVehicleId] = useState(null)
   
   // Set selected vehicle if passed via navigation state
   useEffect(() => {
@@ -28,11 +29,9 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
       const v = vehicles.find(v => v.id === routerLocation.state.selectedVehicleId)
       if (v && (!selectedVehicle || selectedVehicle.id !== v.id)) {
         setSelectedVehicle(v)
-        // Clear state so it doesn't re-trigger on refresh
-        navigate(routerLocation.pathname, { replace: true, state: {} })
       }
     }
-  }, [routerLocation.state, vehicles, navigate, routerLocation.pathname, selectedVehicle])
+  }, [routerLocation.state, vehicles, selectedVehicle])
 
   const [editingVehicle, setEditingVehicle] = useState(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -43,6 +42,7 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
   const { user } = useAuth()
   const [ownerLocation, setOwnerLocation] = useState(null)
   const [geofences, setGeofences] = useState([])
+  const [isGeofencesLoading, setIsGeofencesLoading] = useState(false)
   const [rightPanelView, setRightPanelView] = useState('vehicles')
   const [isDrawingGeofence, setIsDrawingGeofence] = useState(false)
   const [selectedGeofence, setSelectedGeofence] = useState(null)
@@ -52,10 +52,22 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
   const [deletingGeofence, setDeletingGeofence] = useState(null)
   const [isDeleteGeofenceModalOpen, setIsDeleteGeofenceModalOpen] = useState(false)
 
+  const handleRefreshGeofences = () => {
+    setIsGeofencesLoading(true)
+    Promise.all([
+      fetchGeofences().then(setGeofences),
+      new Promise(resolve => setTimeout(resolve, 500)) // Force minimum 500ms delay for animation
+    ])
+      .catch(err => console.error("Failed to refresh geofences", err))
+      .finally(() => setIsGeofencesLoading(false))
+  }
+
   useEffect(() => {
+    setIsGeofencesLoading(true)
     fetchGeofences()
       .then(setGeofences)
       .catch(err => console.error("Failed to load geofences", err))
+      .finally(() => setIsGeofencesLoading(false))
   }, [])
   
   const [showOwnerLocation, setShowOwnerLocation] = useState(() => {
@@ -98,9 +110,15 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
   }, [])
 
   const handleSelect = (vehicle) => {
-    setSelectedVehicle((prev) => prev?.id === vehicle.id ? null : vehicle)
+    const isNowSelected = selectedVehicle?.id !== vehicle.id
+    setSelectedVehicle(isNowSelected ? vehicle : null)
+    
     // Switch to map view on mobile when vehicle selected
     setActiveTab('map')
+  }
+
+  const handleToggleFollow = (vehicleId) => {
+    setFollowedVehicleId(prev => prev === vehicleId ? null : vehicleId)
   }
 
   const handleConfirmDelete = async (vehicleId) => {
@@ -233,6 +251,7 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
             locations={locations}
             locationHistory={locationHistory}
             selectedVehicle={selectedVehicle}
+            followedVehicleId={followedVehicleId}
             lastWsMessage={lastMessage}
             onInterpolatedPositions={handleInterpolatedPositions}
             ownerLocation={ownerLocation}
@@ -251,7 +270,7 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
           {/* Overlay: no vehicles hint */}
           {!isLoading && vehicles.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4 z-10">
-              <div className="bg-white/70 backdrop-blur-md border border-white/50 shadow-xl rounded-xl px-8 py-6 text-center max-w-sm pointer-events-auto flex flex-col items-center">
+              <div className="bg-white/70 backdrop-blur-md border border-white/50 shadow-xl rounded px-8 py-6 text-center max-w-sm pointer-events-auto flex flex-col items-center">
                 <div className="w-12 h-12 bg-[#17b385] text-white rounded-full flex items-center justify-center mb-4 shadow-sm">
                   <Smartphone size={24} />
                 </div>
@@ -292,7 +311,12 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
               vehicles={vehicles}
               locations={locations}
               selectedVehicle={selectedVehicle}
+              followedVehicleId={followedVehicleId}
               onSelect={handleSelect}
+              onToggleFollow={handleToggleFollow}
+              onPlaybackSession={(v) => {
+                navigate('/vehicles', { state: { expandVehicleId: v.id } })
+              }}
               onEdit={(v) => {
                 setEditingVehicle(v)
                 setIsEditModalOpen(true)
@@ -311,8 +335,8 @@ export default function Dashboard({ vehicles, locations, locationHistory, isLoad
               geofences={geofences}
               selectedGeofence={selectedGeofence}
               onSelect={handleGeofenceClick}
-              onRefresh={() => fetchGeofences().then(setGeofences).catch(console.error)}
-              isLoading={false}
+              onRefresh={handleRefreshGeofences}
+              isLoading={isGeofencesLoading}
               onToggleView={() => {
                 setRightPanelView('vehicles')
                 setSelectedGeofence(null)

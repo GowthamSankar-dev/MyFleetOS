@@ -127,7 +127,9 @@ async def get_me(user: User = Depends(require_current_user)):
 @router.patch("/me", response_model=UserResponse)
 async def update_me(
     full_name: str = Form(None),
+    is_recording_enabled: str = Form(None),
     avatar: UploadFile = File(None),
+    remove_avatar: bool = Form(False),
     user: User = Depends(require_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -135,7 +137,12 @@ async def update_me(
     if full_name is not None:
         user.full_name = full_name.strip()
         
-    if avatar is not None:
+    if is_recording_enabled is not None:
+        user.is_recording_enabled = is_recording_enabled.lower() == 'true'
+        
+    if remove_avatar:
+        user.avatar_url = None
+    elif avatar is not None:
         # Read the uploaded image
         image_bytes = avatar.file.read()
         try:

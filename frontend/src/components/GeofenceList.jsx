@@ -1,5 +1,7 @@
-import { RefreshCw, Search, Trash2, ArrowLeft, Plus, MapPin, Github, Linkedin, Mail } from 'lucide-react'
+import { RefreshCw, Search, Trash2, ArrowLeft, Plus, Flag, Github, Linkedin, Mail } from 'lucide-react'
 import { useState } from 'react'
+import { FenceIcon } from './icons/FenceIcon'
+import GlobeLoader from './GlobeLoader'
 
 /**
  * GeofenceList — scrollable panel listing geofences.
@@ -15,17 +17,17 @@ export default function GeofenceList({ geofences, selectedGeofence, onSelect, on
     <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 shrink-0 transition-colors">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="px-4 pt-4 pb-3 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <button
               onClick={onToggleView}
               className="p-1 -ml-1 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Back to Vehicles"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={18} />
             </button>
-            Geofences
-            <span className="ml-0.5 text-xs text-slate-500 font-medium">
+            <span>Geofences</span>
+            <span className="ml-1 text-sm text-slate-500 font-medium">
               ({geofences.length})
             </span>
           </h2>
@@ -66,7 +68,7 @@ export default function GeofenceList({ geofences, selectedGeofence, onSelect, on
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
-            <img src="/globe.svg" alt="Loading..." className="w-8 h-8 mb-2 opacity-70" />
+            <GlobeLoader className="w-8 h-8 mb-2 opacity-70" />
             <p className="text-xs">Loading geofences…</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -97,7 +99,7 @@ export default function GeofenceList({ geofences, selectedGeofence, onSelect, on
                       ? 'bg-brand-primary/20 text-brand-primary dark:bg-[#17b385]/20 dark:text-[#17b385]'
                       : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400'
                   }`}>
-                    <MapPin size={16} />
+                    <Flag size={16} />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">

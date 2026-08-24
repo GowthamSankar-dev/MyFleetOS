@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
-import { Camera, X, User, CheckCircle, Shield, UserCircle } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Camera, X, User, CheckCircle, Shield, UserCircle, Trash2, Key, Video } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { updateProfile, changePassword, requestChangePasswordOTP } from '../api/fleetApi'
 import { useAuth } from '../context/AuthContext'
 import { getAvatarUrl } from '../api/fleetApi'
+import ImageCropModal from './ImageCropModal'
 
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
@@ -16,8 +17,11 @@ export default function SettingsModal({ onClose }) {
   
   // Profile State
   const [fullName, setFullName] = useState(user?.full_name || '')
+  const [isRecordingEnabled, setIsRecordingEnabled] = useState(user?.is_recording_enabled ?? true)
   const [avatarFile, setAvatarFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(user?.avatar_url ? getAvatarUrl(user.avatar_url) : null)
+  const [uncroppedImageSrc, setUncroppedImageSrc] = useState(null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
   const fileInputRef = useRef(null)
 
   // Security State
@@ -34,17 +38,32 @@ export default function SettingsModal({ onClose }) {
   const [successMessage, setSuccessMessage] = useState('')
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file.')
-        return
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setUncroppedImageSrc(e.target.result)
       }
-      setAvatarFile(file)
-      setPreviewUrl(URL.createObjectURL(file))
-      setError(null)
-      setSuccess(false)
+      reader.readAsDataURL(file)
+      e.target.value = null
     }
+  }
+
+  const handleCropComplete = (croppedBlob) => {
+    setAvatarFile(croppedBlob)
+    setPreviewUrl(URL.createObjectURL(croppedBlob))
+    setUncroppedImageSrc(null)
+    setRemoveAvatar(false)
+    setSuccess(false)
+    setError(null)
+  }
+
+  const handleRemoveAvatar = () => {
+    setRemoveAvatar(true)
+    setAvatarFile(null)
+    setPreviewUrl(null)
+    setSuccess(false)
+    setError(null)
   }
 
   const handleProfileSubmit = async (e) => {
@@ -56,8 +75,13 @@ export default function SettingsModal({ onClose }) {
     try {
       const formData = new FormData()
       formData.append('full_name', fullName)
+      formData.append('is_recording_enabled', isRecordingEnabled)
+      
       if (avatarFile) {
-        formData.append('avatar', avatarFile)
+        formData.append('avatar', avatarFile, 'avatar.jpg')
+      }
+      if (removeAvatar) {
+        formData.append('remove_avatar', 'true')
       }
 
       const updatedUser = await updateProfile(formData)
@@ -122,7 +146,7 @@ export default function SettingsModal({ onClose }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm overflow-hidden transition-colors border border-transparent dark:border-slate-800"
+        className="bg-white dark:bg-slate-900 rounded shadow-xl w-full max-w-sm overflow-hidden transition-colors border border-transparent dark:border-slate-800"
       >
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 transition-colors">
           <h2 className="font-bold text-slate-900 dark:text-white text-base">Account Settings</h2>
@@ -156,6 +180,21 @@ export default function SettingsModal({ onClose }) {
         </div>
 
         <div className="p-6">
+          {error && <p className="text-xs text-rose-600 dark:text-rose-400 mb-4">{error}</p>}
+          
+          <AnimatePresence>
+            {success && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+                className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-transparent dark:border-emerald-900/30 p-2 rounded"
+              >
+                <CheckCircle size={14} />
+                {successMessage}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {activeTab === 'profile' ? (
             <form onSubmit={handleProfileSubmit}>
               {/* Avatar Upload */}
@@ -182,6 +221,16 @@ export default function SettingsModal({ onClose }) {
                   className="hidden" 
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Click to change photo</p>
+                {previewUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="flex items-center gap-1.5 mt-2 text-[11px] font-bold text-rose-500 hover:text-rose-600 transition-colors"
+                  >
+                    <Trash2 size={12} />
+                    Remove Profile Picture
+                  </button>
+                )}
               </div>
 
               {/* Name Input */}
@@ -200,24 +249,9 @@ export default function SettingsModal({ onClose }) {
                 />
               </div>
               
-              {error && <p className="text-xs text-rose-600 dark:text-rose-400 mb-4">{error}</p>}
-              
-              <AnimatePresence>
-                {success && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mb-4 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-transparent dark:border-emerald-900/30 p-2 rounded"
-                  >
-                    <CheckCircle size={14} />
-                    {successMessage}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               <button
                 type="submit"
-                disabled={isLoading || (!avatarFile && fullName === user?.full_name)}
+                disabled={isLoading || (!avatarFile && fullName === user?.full_name && !removeAvatar)}
                 className="w-full bg-brand-primary dark:bg-[#17b385] hover:bg-brand-secondary dark:hover:bg-[#14a076] text-white font-semibold text-sm py-2.5 rounded transition-colors disabled:opacity-50 flex justify-center cursor-pointer"
               >
                 {isLoading ? (
@@ -228,19 +262,51 @@ export default function SettingsModal({ onClose }) {
               </button>
             </form>
           ) : !isChangingPassword ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <Shield size={48} className="text-slate-200 dark:text-slate-700 mb-4" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Password & Security</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
-                Update your password to keep your account secure. You will need to verify this action with an OTP sent to your email.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsChangingPassword(true)}
-                className="w-full bg-brand-primary dark:bg-[#17b385] hover:bg-brand-secondary dark:hover:bg-[#14a076] text-white font-semibold text-sm py-2.5 rounded transition-colors cursor-pointer"
-              >
-                Change Password
-              </button>
+            <div className="py-1">
+              <div className="flex items-center justify-between p-2 sm:p-3 mb-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded transition-colors">
+                <div className="flex items-center gap-2">
+                  <Key size={20} className="text-brand-primary dark:text-[#17b385] shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">Password</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Secure your account</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsChangingPassword(true)}
+                  className="text-xs font-semibold text-[#1e496d] dark:text-[#17b385] transition-colors flex items-center gap-1 cursor-pointer px-3 py-1.5 border border-brand-primary/20 hover:border-brand-primary/50 dark:border-[#17b385]/20 dark:hover:border-[#17b385]/50 rounded bg-white dark:bg-slate-900 hover:bg-brand-primary/5 dark:hover:bg-[#17b385]/5 shadow-sm"
+                >
+                  Change
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between p-2 sm:p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded transition-colors">
+                <div className="flex items-center gap-2">
+                  <Video size={20} className="text-brand-primary dark:text-[#17b385] shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">Session Recording</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Record route history for all vehicles</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const newValue = !isRecordingEnabled;
+                    setIsRecordingEnabled(newValue);
+                    try {
+                      const formData = new FormData();
+                      formData.append('is_recording_enabled', newValue);
+                      const updatedUser = await updateProfile(formData);
+                      updateUser(updatedUser);
+                    } catch (e) {
+                      setIsRecordingEnabled(!newValue);
+                    }
+                  }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isRecordingEnabled ? 'bg-brand-primary dark:bg-[#17b385]' : 'bg-slate-300 dark:bg-slate-700'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isRecordingEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handlePasswordSubmit}>
@@ -305,27 +371,11 @@ export default function SettingsModal({ onClose }) {
                     }}
                     required
                     maxLength={6}
-                    placeholder="123456"
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-primary dark:focus:border-[#17b385] focus:ring-1 focus:ring-brand-primary/50 dark:focus:ring-[#17b385]/50 transition-colors text-center tracking-widest font-mono font-bold"
                   />
                   <p className="text-[10px] text-slate-500 mt-1">Please enter the 6-digit code sent to your email.</p>
                 </div>
               )}
-              
-              {error && <p className="text-xs text-rose-600 dark:text-rose-400 mb-4">{error}</p>}
-              
-              <AnimatePresence>
-                {success && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mb-4 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-transparent dark:border-emerald-900/30 p-2 rounded"
-                  >
-                    <CheckCircle size={14} />
-                    {successMessage}
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <button
                 type="submit"
@@ -344,6 +394,13 @@ export default function SettingsModal({ onClose }) {
           )}
         </div>
       </motion.div>
+      {uncroppedImageSrc && (
+        <ImageCropModal
+          imageSrc={uncroppedImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setUncroppedImageSrc(null)}
+        />
+      )}
     </div>
   )
 }

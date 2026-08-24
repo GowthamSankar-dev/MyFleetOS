@@ -490,3 +490,49 @@ export async function assignVehicleToGeofence(vehicleId, geofenceId) {
   }
   return res.json()
 }
+
+// ── Tracking Sessions API ──────────────────────────────────────────────────
+
+export async function fetchVehicleSessions(vehicleId) {
+  const res = await fetch(`${BASE_URL}/vehicles/${vehicleId}/sessions`, {
+    headers: getAuthHeaders(),
+    cache: 'no-store'
+  })
+  if (!res.ok) throw new Error('Failed to fetch vehicle sessions')
+  return res.json()
+}
+
+export async function fetchSessionLocations(vehicleId, sessionId) {
+  const res = await fetch(`${BASE_URL}/vehicles/${vehicleId}/sessions/${sessionId}/locations`, {
+    headers: getAuthHeaders(),
+    cache: 'no-store'
+  })
+  if (!res.ok) throw new Error('Failed to fetch session locations')
+  return res.json()
+}
+
+export async function updateVehicleSession(vehicleId, sessionId, updates) {
+  const res = await fetch(`${BASE_URL}/vehicles/${vehicleId}/sessions/${sessionId}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || 'Failed to update session')
+  }
+  return res.json()
+}
+
+export async function deleteVehicleSession(vehicleId, sessionId) {
+  const res = await fetch(`${BASE_URL}/vehicles/${vehicleId}/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || 'Failed to delete session')
+  }
+  return res.json()
+}
+

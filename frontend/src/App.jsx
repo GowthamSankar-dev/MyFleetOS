@@ -15,6 +15,8 @@ import AuthLayout from './components/AuthLayout'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useVehicles } from './hooks/useVehicles'
 import { useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
+import GlobeLoader from './components/GlobeLoader'
 
 /**
  * App — root component with full authentication & route configuration.
@@ -36,7 +38,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999]">
-        <img src="/globe.svg" alt="Loading..." className="w-16 h-16 mb-6 opacity-80" />
+        <GlobeLoader className="w-16 h-16 mb-6 opacity-80" />
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">myfleetOS</h1>
         <p className="text-sm font-medium text-slate-500">Starting engine...</p>
       </div>
@@ -79,6 +81,7 @@ export default function App() {
                 title="GPS Sender"
                 isConnected={isConnected}
                 lastMessage={lastMessage}
+                hideSeparator={true}
               />
               <main className="flex flex-col flex-1 overflow-y-auto relative min-h-0">
                 <Routes location={location} key={location.pathname}>
@@ -109,6 +112,7 @@ export default function App() {
                   lastMessage={lastMessage}
                   onVehicleAdded={handleRefresh}
                   onToggleMobileMenu={toggleMobileMenu}
+                  hideSeparator={location.pathname.startsWith('/gps')}
                 />
 
                 <AnimatePresence mode="wait">

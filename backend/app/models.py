@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
-    BigInteger, String, Float, DateTime, ForeignKey, func, JSON, Text
+    BigInteger, String, Float, DateTime, ForeignKey, func, JSON, Text, Integer
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
@@ -41,6 +41,9 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+    is_recording_enabled: Mapped[bool] = mapped_column(
+        default=True, nullable=False, server_default="true"
     )
 
     # Unique account-level pairing code — phones use this to request access
@@ -77,6 +80,12 @@ class Vehicle(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False, default="My Vehicle")
     vehicle_type: Mapped[str] = mapped_column(String(32), nullable=False, default="car")
     active_session_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    active_tracking_session_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("tracking_sessions.id", ondelete="SET NULL"), nullable=True
+    )
+    last_moved_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # User ownership (optional for legacy/unclaimed vehicles)
     user_id: Mapped[Optional[int]] = mapped_column(
@@ -110,6 +119,12 @@ class Vehicle(Base):
     locations: Mapped[list["Location"]] = relationship(
         "Location", back_populates="vehicle", cascade="all, delete-orphan"
     )
+    tracking_sessions: Mapped[list["TrackingSession"]] = relationship(
+        "TrackingSession", back_populates="vehicle", cascade="all, delete-orphan", foreign_keys="[TrackingSession.vehicle_id]"
+    )
+    active_tracking_session: Mapped[Optional["TrackingSession"]] = relationship(
+        "TrackingSession", foreign_keys=[active_tracking_session_id], post_update=True
+    )
 
     def __repr__(self) -> str:
         return f"<Vehicle id={self.id} name={self.name!r} code={self.pairing_code!r}>"
@@ -141,6 +156,33 @@ class Geofence(Base):
         return f"<Geofence id={self.id} name={self.name!r}>"
 
 
+class TrackingSession(Base):
+    """Represents a period of active GPS tracking for a vehicle."""
+
+    __tablename__ = "tracking_sessions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
+    vehicle_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    start_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    end_time: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active") # 'active' or 'completed'
+
+    vehicle: Mapped["Vehicle"] = relationship("Vehicle", back_populates="tracking_sessions", foreign_keys=[vehicle_id])
+    locations: Mapped[list["Location"]] = relationship(
+        "Location", back_populates="tracking_session", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"<TrackingSession id={self.id} vehicle_id={self.vehicle_id} status={self.status!r}>"
+
+
 class Location(Base):
     """Stores a single GPS ping for a vehicle."""
 
@@ -157,9 +199,13 @@ class Location(Base):
         server_default=func.now(),
         nullable=False,
     )
+    session_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("tracking_sessions.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     # Relationship back to vehicle
     vehicle: Mapped["Vehicle"] = relationship("Vehicle", back_populates="locations")
+    tracking_session: Mapped[Optional["TrackingSession"]] = relationship("TrackingSession", back_populates="locations")
 
     def __repr__(self) -> str:
         return (

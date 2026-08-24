@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Map, MapPin, Shield, Zap, ChevronRight, Moon, Sun, Github, Linkedin, Mail } from 'lucide-react'
+import { Map, MapPin, Shield, Zap, ChevronRight, Moon, Sun, Github, Linkedin, Mail, Route } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { FenceIcon } from '../components/icons/FenceIcon'
 
@@ -13,11 +13,6 @@ export default function Landing() {
       description: "Monitor your fleet's exact location in real-time with sub-second latency updates directly to your dashboard."
     },
     {
-      icon: <Shield className="text-brand-primary dark:text-[#17b385]" size={24} />,
-      title: "Secure Device Pairing",
-      description: "Approve devices securely using one-time pairing codes and manage access permissions for every vehicle."
-    },
-    {
       icon: <FenceIcon className="text-brand-primary dark:text-[#17b385]" size={24} />,
       title: "Geofencing Alerts",
       description: "Create virtual boundaries and receive instant notifications when vehicles enter or exit designated zones."
@@ -26,17 +21,25 @@ export default function Landing() {
       icon: <Zap className="text-brand-primary dark:text-[#17b385]" size={24} />,
       title: "Role-Based Dashboards",
       description: "Dedicated interfaces for both Fleet Owners and Drivers, tailored to their specific tracking and management needs."
+    },
+    {
+      icon: <Route className="text-brand-primary dark:text-[#17b385]" size={24} />,
+      title: "Tracking Sessions",
+      description: "Keep a historical record of all your vehicle tracking sessions with accurate paths and analytics."
     }
   ]
 
   return (
     <>
-      <div className="min-h-screen w-full flex flex-col pt-6 pb-20">
+      <div className="min-h-screen w-full flex flex-col pt-6">
         
         {/* Navigation Bar */}
         <nav className="w-full max-w-6xl mx-auto px-6 flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <img src="/logo.png" alt="myfleetOS" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]" />
+          <div className="flex items-center gap-1 md:gap-1.5">
+            <img src="/logo.png" alt="myfleetOS icon" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+            <span className="font-bold text-xl md:text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
+              MyFleetOS
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -89,7 +92,7 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mb-10"
           >
-            Track your vehicles in real-time, manage access seamlessly, and empower your drivers with an intuitive GPS sender app.
+            Track your vehicles in real-time, analyze historical sessions, set up geofence alerts, and manage your fleet with role-based dashboards.
           </motion.p>
 
           <motion.div 
@@ -134,7 +137,7 @@ export default function Landing() {
         </motion.section>
 
         {/* Footer */}
-        <footer className="w-full max-w-6xl mx-auto px-6 mt-16 md:mt-24 pt-6 border-t border-slate-200/50 dark:border-slate-800/50 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+        <footer className="w-full max-w-6xl mx-auto px-6 mt-16 md:mt-24 py-6 border-t border-slate-200/50 dark:border-slate-800/50 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 dark:text-slate-400">
           <p>© {new Date().getFullYear()} myfleetOS. All rights reserved.</p>
           <div className="flex items-center gap-4 mt-4 sm:mt-0">
             <a href="https://github.com/GowthamSankar-dev" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors" title="GitHub">

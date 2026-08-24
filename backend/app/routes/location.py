@@ -110,6 +110,22 @@ async def post_location_stop(
             )
             
     # Broadcast device offline event
+    
+    # Close tracking session if active
+    from sqlalchemy import select
+    from app.models import TrackingSession
+    from datetime import datetime, timezone
+    
+    if vehicle.active_tracking_session_id:
+        active_session = await db.execute(
+            select(TrackingSession).where(TrackingSession.id == vehicle.active_tracking_session_id)
+        )
+        active_session = active_session.scalar_one_or_none()
+        if active_session:
+            active_session.end_time = datetime.now(timezone.utc)
+            active_session.status = "completed"
+        vehicle.active_tracking_session_id = None
+        
     vehicle.active_session_id = None
     await db.commit()
 

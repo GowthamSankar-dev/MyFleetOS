@@ -63,8 +63,14 @@ async def init_db():
             await conn.execute(text(
                 "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_type VARCHAR(32) DEFAULT 'car';"
             ))
+            await conn.execute(
+                text("ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS active_tracking_session_id BIGINT REFERENCES tracking_sessions(id) ON DELETE SET NULL;")
+            )
+            await conn.execute(
+                text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_recording_enabled BOOLEAN NOT NULL DEFAULT TRUE;")
+            )
             await conn.execute(text(
-                "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS active_session_id VARCHAR(64);"
+                "ALTER TABLE tracking_sessions ADD COLUMN IF NOT EXISTS name VARCHAR(128);"
             ))
             await conn.execute(text(
                 "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS geofence_id BIGINT REFERENCES geofences(id) ON DELETE SET NULL;"

@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
-    Vehicle, Location, User, PairingRequest, Geofence,
+    Vehicle, Location, User, PairingRequest, Geofence, TrackingSession,
     generate_pairing_code, generate_share_code,
 )
 from app.schemas import LocationCreate, VehicleCreate, VehicleUpdate, GeofenceCreate
@@ -177,20 +177,62 @@ async def record_location(
             }
             asyncio.create_task(manager.broadcast(alert_data))
 
-    # Auto-assign or unassign
-    vehicle.geofence_id = inside_geofence_id
+        # IMPORTANT: actually update the geofence ID so we don't fire repeatedly
+        vehicle.geofence_id = inside_geofence_id
 
+    # Session Management: 
+    # Stop recording if stationary for >= 5s (no pings received) OR if recording was disabled.
+    prev_loc = await get_latest_location(db, vehicle.id)
+    time_diff = (ts - prev_loc.timestamp).total_seconds() if prev_loc else 0
+    
+    if vehicle.active_tracking_session_id:
+        if time_diff >= 5 or not (vehicle.user.is_recording_enabled if vehicle.user else True):
+            old_session = await db.get(TrackingSession, vehicle.active_tracking_session_id)
+            if old_session:
+                old_session.end_time = prev_loc.timestamp if prev_loc else ts
+                old_session.status = "completed"
+            vehicle.active_tracking_session_id = None
+            await db.flush()
 
+    # Start new session if vehicle starts moving, no active session exists, and recording is enabled
+    has_moved = True
+    if prev_loc:
+        lat_diff = abs(payload.latitude - prev_loc.latitude)
+        lng_diff = abs(payload.longitude - prev_loc.longitude)
+        if lat_diff < 0.0001 and lng_diff < 0.0001:
+            has_moved = False
+
+    if not vehicle.active_tracking_session_id and (vehicle.user.is_recording_enabled if vehicle.user else True) and has_moved:
+        new_session = TrackingSession(
+            vehicle_id=vehicle.id,
+            start_time=ts,
+            status="active"
+        )
+        db.add(new_session)
+        await db.flush()
+        vehicle.active_tracking_session_id = new_session.id
+
+    # If recording is disabled, we don't save to the locations table at all!
+    # Wait, the prompt says "Store the vehicle’s live GPS coordinates continuously in the database while recording is active."
+    # If not active, maybe we only update the vehicle's last known position?
+    # No, we always need to broadcast. We can save the location but with session_id=None.
+    # Actually, if we don't save the location, history won't work. Let's save it.
     location = Location(
         vehicle_id=vehicle.id,
         latitude=payload.latitude,
         longitude=payload.longitude,
         timestamp=ts,
+        session_id=vehicle.active_tracking_session_id,
     )
-    db.add(location)
-    await db.commit()
-    await db.refresh(vehicle)
-    await db.refresh(location)
+    # Only save location to DB if recording is enabled and vehicle has actually moved
+    if (vehicle.user.is_recording_enabled if vehicle.user else True) and has_moved:
+        db.add(location)
+        await db.commit()
+        await db.refresh(location)
+    else:
+        # We don't save to DB if stationary, but we still need to return a Location object for the websocket broadcast
+        await db.commit() # commit geofence changes
+
     return vehicle, location
 
 
@@ -433,6 +475,32 @@ async def create_pairing_request(
     return req
 
 
+async def cleanup_stale_sessions(db: AsyncSession):
+    """
+    Find any active tracking sessions where the vehicle hasn't sent a location in >= 5 seconds.
+    We end those sessions.
+    """
+    result = await db.execute(
+        select(Vehicle).where(Vehicle.active_tracking_session_id.is_not(None))
+    )
+    vehicles = result.scalars().all()
+    
+    now = datetime.now(timezone.utc)
+    for vehicle in vehicles:
+        prev_loc = await get_latest_location(db, vehicle.id)
+        if prev_loc:
+            time_diff = (now - prev_loc.timestamp).total_seconds()
+            if time_diff >= 5:
+                old_session = await db.get(TrackingSession, vehicle.active_tracking_session_id)
+                if old_session:
+                    old_session.end_time = prev_loc.timestamp
+                    old_session.status = "completed"
+                vehicle.active_tracking_session_id = None
+    
+    if vehicles:
+        await db.commit()
+
+
 async def list_pairing_requests(
     db: AsyncSession, user_id: int, status_filter: str | None = None
 ) -> list[PairingRequest]:
@@ -665,3 +733,22 @@ def is_point_in_polygon(point: dict, polygon: list[dict]) -> bool:
         p1x, p1y = p2x, p2y
         
     return inside
+
+# ── Tracking Sessions ──────────────────────────────────────────────────────
+
+async def get_vehicle_sessions(db: AsyncSession, vehicle_id: int):
+    result = await db.execute(
+        select(TrackingSession)
+        .where(TrackingSession.vehicle_id == vehicle_id)
+        .order_by(desc(TrackingSession.start_time))
+    )
+    return list(result.scalars().all())
+
+async def get_session_locations(db: AsyncSession, session_id: int):
+    result = await db.execute(
+        select(Location)
+        .where(Location.session_id == session_id)
+        .order_by(Location.timestamp)
+    )
+    return list(result.scalars().all())
+

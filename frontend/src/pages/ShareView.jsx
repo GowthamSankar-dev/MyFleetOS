@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Navigation, Truck, MapPin, Clock, AlertCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import GlobeLoader from '../components/GlobeLoader'
 import FleetMap from '../components/FleetMap'
 import { fetchSharedVehicle } from '../api/fleetApi'
 import { motion } from 'framer-motion'
@@ -75,7 +76,7 @@ export default function ShareView() {
       <div className="flex-1 relative">
         {isLoading && !vehicle ? (
           <div className="flex-1 flex flex-col items-center justify-center bg-slate-50">
-             <img src="/globe.svg" alt="Loading..." className="w-12 h-12 mb-4 opacity-70" />
+             <GlobeLoader className="w-12 h-12 mb-4 opacity-70" />
              <p className="text-slate-500 font-medium text-sm">Connecting to GPS tracker...</p>
           </div>
         ) : error ? (

@@ -8,6 +8,7 @@ Wires together:
 """
 
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 
 import os
@@ -17,8 +18,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.config import settings
-from app.database import init_db
+from app.database import init_db, AsyncSessionLocal
 from app.routes import auth, location, vehicles, websocket, pairing, geofences
+from app.services import cleanup_stale_sessions
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
@@ -32,13 +34,24 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
+async def stale_session_worker():
+    while True:
+        await asyncio.sleep(5)
+        try:
+            async with AsyncSessionLocal() as db:
+                await cleanup_stale_sessions(db)
+        except Exception as e:
+            logger.error(f"Error in stale_session_worker: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Run startup tasks before the app starts accepting requests."""
     logger.info("⚡  Starting Fleet Tracking API…")
     await init_db()
     logger.info("✅  Database tables verified/created.")
+    worker_task = asyncio.create_task(stale_session_worker())
     yield
+    worker_task.cancel()
     logger.info("🛑  Shutting down Fleet Tracking API.")
 
 

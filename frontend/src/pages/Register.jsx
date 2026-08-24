@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Lock, Mail, User, AlertCircle, CheckCircle, Eye, EyeOff, Building2, Car } from 'lucide-react'
+import { Lock, Mail, User, AlertCircle, CheckCircle, Eye, EyeOff, Users, Car, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { requestRegisterOtp, checkHealth } from '../api/fleetApi'
 import OTPInput from '../components/OTPInput'
 
 export default function Register() {
   const [step, setStep] = useState(1) // 1: Form, 2: OTP
+  const [formSlide, setFormSlide] = useState(1) // 1: Info, 2: Password
   const [role, setRole] = useState('owner') // 'owner' | 'driver'
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -18,6 +19,8 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false)
+  const [showPolicy, setShowPolicy] = useState(false)
   const [retryCountdown, setRetryCountdown] = useState(null)
   const keepAliveRef = useRef(null)
   const retryTimerRef = useRef(null)
@@ -127,8 +130,11 @@ export default function Register() {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm max-w-md w-full p-8 transition-colors">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="mb-3 transition-colors">
-            <img src="/logo.png" alt="myfleetOS" className="h-8 w-auto object-contain" />
+          <div className="mb-4 flex flex-col items-center gap-1 transition-colors">
+            <img src="/logo.png" alt="myfleetOS icon" className="h-14 w-auto object-contain" />
+            <span className="font-bold text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
+              MyFleetOS
+            </span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Create your Account</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Start tracking your private vehicles live</p>
@@ -151,120 +157,160 @@ export default function Register() {
         {step === 1 ? (
           <form onSubmit={handleRequestOtp} className="space-y-4">
             
-            {/* Role Selector */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <button
-                type="button"
-                onClick={() => setRole('owner')}
-                className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                  role === 'owner'
-                    ? 'border-brand-primary dark:border-[#17b385] bg-brand-primary/5 dark:bg-[#17b385]/10'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
-                }`}
-              >
-                <Building2 size={24} className={`mb-2 ${role === 'owner' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-400'}`} />
-                <span className={`text-xs font-semibold ${role === 'owner' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-600 dark:text-slate-400'}`}>Fleet Owner</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setRole('driver')}
-                className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                  role === 'driver'
-                    ? 'border-brand-primary dark:border-[#17b385] bg-brand-primary/5 dark:bg-[#17b385]/10'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
-                }`}
-              >
-                <Car size={24} className={`mb-2 ${role === 'driver' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-400'}`} />
-                <span className={`text-xs font-semibold ${role === 'driver' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-600 dark:text-slate-400'}`}>Driver / Vehicle</span>
-              </button>
-            </div>
+            {formSlide === 1 ? (
+              <>
+                {/* Role Selector */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setRole('owner')}
+                    className={`flex flex-col items-center justify-center p-3 rounded border-2 transition-all cursor-pointer ${
+                      role === 'owner'
+                        ? 'border-brand-primary dark:border-[#17b385] bg-brand-primary/5 dark:bg-[#17b385]/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    <Users size={24} className={`mb-2 ${role === 'owner' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-400'}`} />
+                    <span className={`text-xs font-semibold ${role === 'owner' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-600 dark:text-slate-400'}`}>Fleet Owner</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setRole('driver')}
+                    className={`flex flex-col items-center justify-center p-3 rounded border-2 transition-all cursor-pointer ${
+                      role === 'driver'
+                        ? 'border-brand-primary dark:border-[#17b385] bg-brand-primary/5 dark:bg-[#17b385]/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    <Car size={24} className={`mb-2 ${role === 'driver' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-400'}`} />
+                    <span className={`text-xs font-semibold ${role === 'driver' ? 'text-brand-primary dark:text-[#17b385]' : 'text-slate-600 dark:text-slate-400'}`}>Driver / Vehicle</span>
+                  </button>
+                </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full name</label>
-              <div className="relative">
-                <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Peter Parker"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:!shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:![-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:!shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:![-webkit-text-fill-color:#F1F5F9]"
-                />
-              </div>
-            </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full name</label>
+                  <div className="relative">
+                    <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Peter Parker"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:!shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:![-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:!shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:![-webkit-text-fill-color:#F1F5F9]"
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email address</label>
-              <div className="relative">
-                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
-              <div className="relative">
-                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Minimum 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-10 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email address</label>
+                  <div className="relative">
+                    <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
+                    />
+                  </div>
+                </div>
+                
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  onClick={() => {
+                    if (fullName && email) setFormSlide(2)
+                  }}
+                  disabled={!fullName || !email}
+                  className="w-full py-2.5 bg-brand-primary dark:bg-[#17b385] hover:bg-brand-primary/90 dark:hover:bg-[#17b385]/90 text-white font-semibold text-xs rounded shadow-sm transition-colors cursor-pointer disabled:opacity-50 mt-4"
                 >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  Next Step
                 </button>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Re-enter Password</label>
-              <div className="relative">
-                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Minimum 6 characters"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-10 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-                >
-                  {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                  <div className="relative">
+                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      placeholder="Minimum 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-10 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Re-enter Password</label>
+                  <div className="relative">
+                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      placeholder="Minimum 6 characters"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded pl-9 pr-10 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-primary transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#fff] [&:-webkit-autofill]:[-webkit-text-fill-color:#0F172A] dark:[&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_#020617] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#F1F5F9]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 bg-brand-primary dark:bg-[#17b385] hover:bg-brand-primary/90 dark:hover:bg-[#17b385]/90 text-white font-semibold text-xs rounded shadow-sm transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? 'Processing…' : 'Create Account'}
-            </button>
+                <div className="flex items-start gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="privacy-policy"
+                    checked={agreedToPolicy}
+                    onChange={(e) => setAgreedToPolicy(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-brand-primary focus:ring-brand-primary cursor-pointer"
+                    required
+                  />
+                  <label htmlFor="privacy-policy" className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                    I agree to the <button type="button" onClick={() => setShowPolicy(true)} className="text-brand-primary dark:text-[#17b385] hover:underline font-semibold cursor-pointer">Privacy Policy</button>.
+                  </label>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormSlide(1)}
+                    className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded shadow-sm transition-colors cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-2.5 bg-brand-primary dark:bg-[#17b385] hover:bg-brand-primary/90 dark:hover:bg-[#17b385]/90 text-white font-semibold text-xs rounded shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Processing…' : 'Create Account'}
+                  </button>
+                </div>
+              </>
+            )}
           </form>
         ) : (
           <form onSubmit={handleRegister} className="space-y-4">
@@ -304,6 +350,37 @@ export default function Register() {
           </Link>
         </div>
       </div>
+
+      {showPolicy && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade-in"
+          onClick={() => setShowPolicy(false)}
+        >
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl rounded max-w-sm w-full relative transition-colors" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowPolicy(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer">
+              <X size={18} />
+            </button>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Privacy Policy</h3>
+            <div className="text-xs text-slate-600 dark:text-slate-400 space-y-3 leading-relaxed">
+              <p>
+                <strong>myfleetOS</strong> values your privacy. If you choose to register and use our platform, your GPS data will <strong>only</strong> be collected when you actively click "Start Sharing" in the GPS Sender dashboard.
+              </p>
+              <p>
+                Your real-time location is strictly used to display your position to the specific fleet owner you have paired with. 
+              </p>
+              <p>
+                We do not sell, trade, or otherwise transfer your location data to outside parties. You have full control and can stop sharing your location at any time.
+              </p>
+            </div>
+            <button
+              onClick={() => { setShowPolicy(false); setAgreedToPolicy(true); }}
+              className="mt-6 w-full py-2.5 bg-brand-primary dark:bg-[#17b385] hover:bg-brand-primary/90 dark:hover:bg-[#17b385]/90 text-white font-semibold text-xs rounded transition-colors shadow-sm cursor-pointer"
+            >
+              I Agree
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

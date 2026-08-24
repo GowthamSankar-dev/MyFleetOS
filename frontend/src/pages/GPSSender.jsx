@@ -3,6 +3,8 @@ import { useSearchParams, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Navigation, Loader2, XCircle, Play, Square, AlertCircle, Smartphone, History, ChevronRight, ChevronLeft, Github, Linkedin, Mail } from 'lucide-react'
 import { sendPairingRequest, checkPairingStatus, sendLocation, stopLocationTracking, claimVehicleSession, fetchPairingHistory, getAvatarUrl } from '../api/fleetApi'
+import { FenceIcon } from '../components/icons/FenceIcon'
+import GlobeLoader from '../components/GlobeLoader'
 import { useAuth } from '../context/AuthContext'
 
 const INTERVAL_MS = 1000
@@ -37,6 +39,7 @@ export default function GPSSender() {
   const wakeLockRef = useRef(null)
   const trackingRef = useRef(isTracking)
   const simIntervalRef = useRef(null)
+  const logsEndRef = useRef(null)
 
   // Keep trackingRef in sync with state
   useEffect(() => {
@@ -74,6 +77,13 @@ export default function GPSSender() {
     const time = new Date().toLocaleTimeString()
     setLogs(prev => [...prev, { id: Date.now() + Math.random(), type, msg, time }].slice(-20))
   }
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [logs])
 
   // Wake lock management
   const requestWakeLock = async () => {
@@ -297,6 +307,11 @@ export default function GPSSender() {
       3: 'GPS request timed out — retrying…'
     }
     addLog('err', msgs[err.code] || 'GPS error')
+
+    if (err.code === 1 || err.code === 2) {
+      stopTracking()
+      alert(msgs[err.code])
+    }
   }
 
   const startTracking = () => {
@@ -314,13 +329,46 @@ export default function GPSSender() {
     })
 
     if (isSimulating) {
-      addLog('info', 'Starting simulated GPS movement...')
+      addLog('info', 'Starting simulated GPS movement (dynamic)...')
       let currentLat = simLat
       let currentLng = simLng
       
+      let tick = 0
+      let phase = 'straight'
+      let phaseTicksLeft = 5
+      let baseAngle = Math.random() * Math.PI * 2 // Random initial direction
+      let speed = 0.0003
+      
       simIntervalRef.current = setInterval(() => {
-        currentLat += 0.0002 // move slowly northeast
-        currentLng += 0.0002
+        tick++
+        if (phaseTicksLeft <= 0) {
+          // Switch phase randomly
+          const phases = ['straight', 'curve', 'zigzag']
+          phase = phases[Math.floor(Math.random() * phases.length)]
+          phaseTicksLeft = Math.floor(Math.random() * 15) + 10 // 10 to 25 seconds per phase
+          baseAngle += (Math.random() - 0.5) * Math.PI // Change general direction slightly
+          addLog('info', `Simulation phase changed to: ${phase}`)
+        }
+        
+        let currentAngle = baseAngle
+        if (phase === 'curve') {
+          // Smooth sine wave over base angle (Snake)
+          currentAngle = baseAngle + Math.sin(tick * 0.3) * 1.5
+        } else if (phase === 'zigzag') {
+          // Sharp alternating angle
+          currentAngle = baseAngle + ((tick % 6 < 3) ? 1.0 : -1.0)
+        } else {
+          // Straight line with very slight drift
+          currentAngle = baseAngle + Math.sin(tick * 0.1) * 0.1
+        }
+        
+        // Move according to angle
+        currentLat += Math.sin(currentAngle) * speed
+        // Multiply Lng by a factor to account for projection distortion slightly if we wanted, but not strictly necessary for fake data
+        currentLng += Math.cos(currentAngle) * speed
+        
+        phaseTicksLeft--
+        
         setSimLat(currentLat)
         setSimLng(currentLng)
         handleLocationUpdate({ coords: { latitude: currentLat, longitude: currentLng, accuracy: 5 } })
@@ -330,15 +378,27 @@ export default function GPSSender() {
 
     addLog('info', 'Acquiring high-precision GPS…')
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      handleLocationUpdate,
-      handleLocationError,
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-    )
+    // Force prompt/location fetch before watching
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (!trackingRef.current) return // User cancelled before lock
+        handleLocationUpdate(pos)
+        
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          handleLocationUpdate,
+          handleLocationError,
+          { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+        )
 
-    intervalIdRef.current = setInterval(() => {
-      if (lastPosRef.current) postGPS(lastPosRef.current)
-    }, INTERVAL_MS)
+        intervalIdRef.current = setInterval(() => {
+          if (lastPosRef.current) postGPS(lastPosRef.current)
+        }, INTERVAL_MS)
+      },
+      (err) => {
+        handleLocationError(err)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
 
     requestWakeLock()
   }
@@ -472,7 +532,7 @@ export default function GPSSender() {
 
         {status === 'pending' && (
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800/50 p-6 shadow-sm text-center transition-colors">
-            <img src="/globe.svg" alt="Loading..." className="w-8 h-8 mx-auto mb-3 opacity-80" />
+            <GlobeLoader className="w-8 h-8 mx-auto mb-3 opacity-80" />
             <h2 className="text-sm font-bold text-amber-900 dark:text-amber-500 mb-1">Waiting for approval…</h2>
             <p className="text-xs text-amber-700 dark:text-amber-400">The account owner needs to approve this device.</p>
             <p className="text-[10px] text-amber-600 dark:text-amber-300 font-mono mt-4">Device ID: {deviceId}</p>
@@ -559,7 +619,7 @@ export default function GPSSender() {
               )}
             </div>
             
-            {!isTracking && (
+            {!isTracking && user?.email === 'gowthamsankarelayaraja@gmail.com' && (
               <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded p-3 mb-4">
                 <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input 
@@ -586,24 +646,25 @@ export default function GPSSender() {
               {isTracking ? 'Stop Sharing' : 'Start Sharing Location'}
             </button>
 
-            <div className="bg-slate-900 rounded p-3 h-32 overflow-y-auto font-mono text-[10px] space-y-1">
+            <div className="bg-slate-100 dark:bg-slate-900 rounded p-3 h-32 overflow-y-auto font-mono text-[10px] space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {logs.length === 0 ? (
-                <p className="text-slate-500">System ready. Waiting to start...</p>
+                <p className="text-slate-500 dark:text-slate-400">System ready. Waiting to start...</p>
               ) : (
                 logs.map((log) => (
                   <div key={log.id} className="flex gap-2">
                     <span className="text-slate-500 shrink-0">[{log.time}]</span>
                     <span className={`break-words ${
-                      log.type === 'ok' ? 'text-emerald-400' :
-                      log.type === 'err' ? 'text-rose-400' :
-                      log.type === 'warn' ? 'text-amber-400' :
-                      'text-slate-300'
+                      log.type === 'ok' ? 'text-emerald-600 dark:text-emerald-400' :
+                      log.type === 'err' ? 'text-rose-600 dark:text-rose-400' :
+                      log.type === 'warn' ? 'text-amber-600 dark:text-amber-400' :
+                      'text-slate-700 dark:text-slate-300'
                     }`}>
                       {log.msg}
                     </span>
                   </div>
                 ))
               )}
+              <div ref={logsEndRef} />
             </div>
 
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded p-3 flex items-start gap-2 transition-colors">

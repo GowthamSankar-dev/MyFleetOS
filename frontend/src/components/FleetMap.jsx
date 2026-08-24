@@ -128,7 +128,7 @@ function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
     <>
       {/* Top Left: Zoom Controls */}
       <div className="leaflet-top leaflet-left absolute z-[1000] top-2 left-2 md:top-4 md:left-4">
-        <div ref={zoomRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+        <div ref={zoomRef} className="leaflet-control flex flex-col rounded shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
           <button onClick={(e) => { e.preventDefault(); map.zoomIn() }} className={btnClass} title="Zoom In">
             <Plus className={iconClass} />
           </button>
@@ -140,7 +140,7 @@ function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
 
       {/* Top Right: Theme & Full Screen */}
       <div className="leaflet-top leaflet-right absolute z-[1000] top-2 right-2 md:top-4 md:right-4">
-        <div ref={topRightRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+        <div ref={topRightRef} className="leaflet-control flex flex-col rounded shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
           <button onClick={(e) => { e.preventDefault(); cycleTheme() }} className={btnClass} title={`Map Theme: ${mapTheme}`}>
             <Layers className={iconClass} />
           </button>
@@ -153,7 +153,7 @@ function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
       {/* Bottom Right: Show My Location */}
       {onToggleOwnerLocation && (
         <div className="leaflet-bottom leaflet-right absolute z-[1000] bottom-4 right-2 md:bottom-6 md:right-4">
-          <div ref={bottomRightRef} className="leaflet-control flex flex-col rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+          <div ref={bottomRightRef} className="leaflet-control flex flex-col rounded shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden" style={{ pointerEvents: 'auto' }}>
             <button onClick={(e) => { e.preventDefault(); onToggleOwnerLocation() }} className={btnClass} title={showOwnerLocation ? "Hide My Location" : "Show My Location"}>
               <LocateFixed className={`${iconClass} ${showOwnerLocation ? "text-brand-primary dark:text-[#17b385]" : ""}`} />
             </button>
@@ -168,7 +168,7 @@ function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
  * FleetMap — Leaflet map showing all vehicle markers with smooth
  * real-time interpolation between GPS pings and breadcrumb route trails.
  */
-export default function FleetMap({ children, vehicles, locations, locationHistory, selectedVehicle, lastWsMessage, onInterpolatedPositions, ownerLocation, ownerUser, geofences, isDashboard, isDrawingGeofence, onCancelDrawing, onGeofenceDrawn, selectedGeofence, onGeofenceClick, showOwnerLocation, onToggleOwnerLocation }) {
+export default function FleetMap({ children, vehicles, locations, locationHistory, selectedVehicle, followedVehicleId, lastWsMessage, onInterpolatedPositions, ownerLocation, ownerUser, geofences, isDashboard, isDrawingGeofence, onCancelDrawing, onGeofenceDrawn, selectedGeofence, onGeofenceClick, showOwnerLocation, onToggleOwnerLocation }) {
   const [userCenter, setUserCenter] = useState(null)
   const { isDarkMode, mapTheme } = useTheme()
   const navigate = useNavigate()
@@ -202,11 +202,12 @@ export default function FleetMap({ children, vehicles, locations, locationHistor
   const initialZoom = (firstLocation || userCenter) ? 13 : DEFAULT_ZOOM
 
   const flyTarget = selectedVehicle && locations[selectedVehicle.id]
-    ? [
-        locations[selectedVehicle.id].matched_latitude ?? locations[selectedVehicle.id].latitude, 
-        locations[selectedVehicle.id].matched_longitude ?? locations[selectedVehicle.id].longitude
-      ]
-    : null
+      ? [
+          locations[selectedVehicle.id].matched_latitude ?? locations[selectedVehicle.id].latitude, 
+          locations[selectedVehicle.id].matched_longitude ?? locations[selectedVehicle.id].longitude
+        ]
+      : null
+
 
   let ownerAvatarUrl = getAvatarUrl(ownerUser?.avatar_url)
 
@@ -310,6 +311,7 @@ export default function FleetMap({ children, vehicles, locations, locationHistor
               vehicle={vehicle}
               location={loc}
               isSelected={isSelected}
+              isFollowed={followedVehicleId === vehicle.id}
               onInterpolatedPosition={handleInterpolatedPosition}
             />
           </LayerGroup>

@@ -239,3 +239,104 @@ async def claim_vehicle_session(
     vehicle.active_session_id = session_id
     await db.commit()
     return {"status": "ok"}
+
+
+from app.schemas import TrackingSessionResponse
+
+@router.get(
+    "/{vehicle_id}/sessions",
+    response_model=list[TrackingSessionResponse],
+    summary="Get tracking sessions for a vehicle",
+)
+async def get_sessions(
+    vehicle_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_current_user),
+):
+    """Return all tracking sessions for a vehicle."""
+    vehicle = await get_vehicle_by_id(db, vehicle_id)
+    if vehicle is None or vehicle.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+    from app.services import get_vehicle_sessions
+    sessions = await get_vehicle_sessions(db, vehicle_id)
+    return sessions
+
+
+@router.get(
+    "/{vehicle_id}/sessions/{session_id}/locations",
+    response_model=list[LocationResponse],
+    summary="Get locations for a specific tracking session",
+)
+async def get_session_locations_route(
+    vehicle_id: int,
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_current_user),
+):
+    """Return coordinates for a specific tracking session."""
+    vehicle = await get_vehicle_by_id(db, vehicle_id)
+    if vehicle is None or vehicle.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+    from app.services import get_session_locations
+    locations = await get_session_locations(db, session_id)
+    return locations
+
+
+@router.delete(
+    "/{vehicle_id}/sessions/{session_id}",
+    summary="Delete a tracking session",
+)
+async def delete_vehicle_session(
+    vehicle_id: int,
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_current_user),
+):
+    """Delete a specific tracking session and all its locations."""
+    vehicle = await get_vehicle_by_id(db, vehicle_id)
+    if vehicle is None or vehicle.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+    from app.models import TrackingSession
+    session = await db.get(TrackingSession, session_id)
+    if not session or session.vehicle_id != vehicle_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    await db.delete(session)
+    await db.commit()
+    return {"message": "Session deleted"}
+
+
+from app.schemas import TrackingSessionUpdate
+
+@router.patch(
+    "/{vehicle_id}/sessions/{session_id}",
+    response_model=TrackingSessionResponse,
+    summary="Update a tracking session",
+)
+async def update_vehicle_session(
+    vehicle_id: int,
+    session_id: int,
+    payload: TrackingSessionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_current_user),
+):
+    """Rename a tracking session."""
+    vehicle = await get_vehicle_by_id(db, vehicle_id)
+    if vehicle is None or vehicle.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+        
+    from app.models import TrackingSession
+    session = await db.get(TrackingSession, session_id)
+    if not session or session.vehicle_id != vehicle_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    if payload.name is not None:
+        session.name = payload.name.strip() or None
+        
+    await db.commit()
+    await db.refresh(session)
+    return session
+

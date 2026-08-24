@@ -146,7 +146,7 @@ input:autofill:active {
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
   transition: color 0.3s ease;
   color: #0F172A; /* Default light text */

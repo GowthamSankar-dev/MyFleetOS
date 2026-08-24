@@ -1,4 +1,4 @@
-import { Truck, MapPin, Clock, Trash2, Edit2, Car, Bike, Bus, MoreVertical } from 'lucide-react'
+import { Truck, MapPin, Clock, Trash2, Edit2, Car, Bike, Bus, MoreVertical, Crosshair, History } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useEffect, useRef } from 'react'
 
@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react'
  */
 const ACTIVE_THRESHOLD_MS = 2 * 60 * 1000   // 2 minutes
 
-export default function VehicleCard({ vehicle, location, isSelected, onSelect, onEdit, onDelete }) {
+export default function VehicleCard({ vehicle, location, isSelected, isFollowed, onSelect, onToggleFollow, onEdit, onDelete, onPlaybackSession }) {
   const hasLocation = !!location
 
   const getVehicleIcon = (type) => {
@@ -85,6 +85,7 @@ export default function VehicleCard({ vehicle, location, isSelected, onSelect, o
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'}`}>
             {isActive ? 'Online' : 'Offline'}
           </span>
+          
           <div className="relative flex items-center opacity-80 group-hover:opacity-100 transition-opacity" ref={menuRef}>
             {(onEdit || onDelete) && (
               <button
@@ -125,26 +126,58 @@ export default function VehicleCard({ vehicle, location, isSelected, onSelect, o
         </div>
       </div>
 
-      {/* ── Device ID ──────────────────────────────────────────────────── */}
-      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono truncate mb-2">{vehicle.device_id}</p>
 
       {/* ── Location & time ────────────────────────────────────────────── */}
       {hasLocation ? (
-        <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-300">
-            <MapPin size={11} className="text-brand-primary dark:text-[#17b385] shrink-0" />
-            <span className="font-mono">
-              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-            </span>
+        <div className="flex items-end justify-between pt-1 border-t border-slate-100 dark:border-slate-800 mt-1.5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-300">
+              <MapPin size={11} className="text-brand-primary dark:text-[#17b385] shrink-0" />
+              <span className="font-mono">
+                {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+              <Clock size={10} className="shrink-0" />
+              <span>{lastSeen}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-            <Clock size={10} className="shrink-0" />
-            <span>{lastSeen}</span>
+          <div className="flex items-center gap-1 shrink-0">
+            {onToggleFollow && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleFollow(vehicle.id)
+                }}
+                title={isFollowed ? "Stop following" : "Follow vehicle on map"}
+                className={`p-1.5 rounded transition-colors cursor-pointer ${
+                  isFollowed 
+                    ? 'text-brand-primary dark:text-[#17b385] bg-brand-primary/10 dark:bg-[#17b385]/10' 
+                    : 'text-slate-400 hover:text-brand-primary dark:hover:text-[#17b385] hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Crosshair size={14} />
+              </button>
+            )}
+
+            {onPlaybackSession && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onPlaybackSession(vehicle)
+                }}
+                title="View Tracking History"
+                className="p-1.5 rounded text-slate-400 hover:text-brand-primary dark:hover:text-[#17b385] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <History size={14} />
+              </button>
+            )}
           </div>
         </div>
       ) : (
         <p className="text-[11px] text-slate-400 italic">Waiting for location…</p>
       )}
+
     </div>
   )
 }

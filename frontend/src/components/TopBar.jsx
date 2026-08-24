@@ -20,7 +20,7 @@ const BASE_URL = (
  * TopBar — shows page title, last update time, Connect GPS button,
  *          and user profile chip in the top right.
  */
-export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
+export default function TopBar({ title, lastMessage, onToggleMobileMenu, hideSeparator }) {
   const [showQr, setShowQr] = useState(false)
   const [showLoginNotice, setShowLoginNotice] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
@@ -83,8 +83,11 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
       }
       setNotifications(prev => [newAlert, ...prev].slice(0, 50)) // keep last 50
       
-      // Add to toasts
-      setActiveToasts(prev => [...prev, newAlert])
+      // Add to toasts (prevent duplicates)
+      setActiveToasts(prev => {
+        if (prev.some(t => t.text === newAlert.text)) return prev
+        return [...prev, newAlert]
+      })
       
       // Auto-remove toast after 5s
       setTimeout(() => {
@@ -142,7 +145,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
     <>
       <header className="relative flex items-center justify-between px-3.5 py-2.5 md:p-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 transition-colors">
         {/* Left Section (Map width) */}
-        <div className="flex items-center justify-between md:flex-1 md:px-6 md:py-3.5 md:border-r border-slate-200 dark:border-slate-800">
+        <div className={`flex items-center justify-between md:flex-1 md:px-6 md:py-3.5 ${hideSeparator ? '' : 'md:border-r border-slate-200 dark:border-slate-800'}`}>
           <div className="flex items-center gap-3 md:flex-1">
             {/* Mobile Menu Button */}
             {onToggleMobileMenu && (
@@ -156,8 +159,11 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
             )}
 
             {/* Logo */}
-            <div className="w-20 h-7 md:w-24 md:h-8 shrink-0 flex items-center justify-center transition-colors">
-              <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
+            <div className="flex items-center gap-1 md:gap-1.5 shrink-0 transition-colors">
+              <img src="/logo.png" alt="myfleetOS icon" className="h-7 md:h-8 object-contain" />
+              <span className="font-bold text-lg md:text-xl tracking-tight text-[#06375d] dark:text-[#14a076]">
+                MyFleetOS
+              </span>
             </div>
           </div>
 
@@ -168,27 +174,25 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                 to="/"
                 end
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  `px-4 py-1.5 text-sm font-medium transition-all duration-300 ${
                     isActive
-                      ? 'bg-brand-primary/10 dark:bg-[#17b385]/10 text-brand-primary dark:text-[#17b385] font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'text-brand-primary dark:text-[#17b385] [text-shadow:0_0_12px_rgba(6,53,93,0.5)] dark:[text-shadow:0_0_12px_rgba(23,179,133,0.6)]'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
               >
-                <LayoutDashboard size={16} />
                 <span>Dashboard</span>
               </NavLink>
               <NavLink
                 to="/vehicles"
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  `px-4 py-1.5 text-sm font-medium transition-all duration-300 ${
                     isActive
-                      ? 'bg-brand-primary/10 dark:bg-[#17b385]/10 text-brand-primary dark:text-[#17b385] font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'text-brand-primary dark:text-[#17b385] [text-shadow:0_0_12px_rgba(6,53,93,0.5)] dark:[text-shadow:0_0_12px_rgba(23,179,133,0.6)]'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
               >
-                <Truck size={16} />
                 <span>Vehicles</span>
               </NavLink>
             </nav>
@@ -233,7 +237,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                     className="fixed inset-0 z-40" 
                     onClick={() => setShowNotifications(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xl z-50 py-1 animate-fade-in flex flex-col max-h-[80vh]">
+                  <div className="fixed top-16 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:absolute sm:top-full sm:left-auto sm:right-0 sm:translate-x-0 mt-2 sm:w-80 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 shadow-xl z-50 py-1 animate-fade-in flex flex-col max-h-[80vh]">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white">Notifications</h3>
                       {notifications.length > 0 && (
@@ -245,7 +249,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                         </button>
                       )}
                     </div>
-                    <div className="overflow-y-auto flex-1">
+                    <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center text-slate-500 dark:text-slate-400">
                           <Bell size={24} className="mx-auto mb-2 opacity-50" />
@@ -336,7 +340,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
                       className="fixed inset-0 z-40" 
                       onClick={() => setShowProfileMenu(false)}
                     />
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xl z-50 py-1 animate-fade-in">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 shadow-xl z-50 py-1 animate-fade-in">
                       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 mb-1">
                         <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.full_name}</p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{user.email}</p>
@@ -385,7 +389,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
           onClick={(e) => e.target.id === 'login-notice-backdrop' && setShowLoginNotice(false)}
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center gap-4 text-center shadow-xl rounded-xl max-w-xs w-full animate-fade-in transition-colors relative">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center gap-4 text-center shadow-xl rounded max-w-xs w-full animate-fade-in transition-colors relative">
             <button
               onClick={() => setShowLoginNotice(false)}
               className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
@@ -519,7 +523,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 p-4 animate-fade-in"
           onClick={(e) => e.target.id === 'logout-confirm-backdrop' && setShowLogoutConfirm(false)}
         >
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center gap-4 text-center shadow-xl rounded-xl max-w-xs w-full animate-fade-in transition-colors">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center gap-4 text-center shadow-xl rounded max-w-xs w-full animate-fade-in transition-colors">
             <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-500 flex items-center justify-center">
               <LogOut size={24} />
             </div>
@@ -560,7 +564,7 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu }) {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-slate-900 dark:bg-slate-800 text-white shadow-xl rounded-lg px-4 py-3 min-w-[280px] max-w-sm border border-slate-700 pointer-events-auto flex items-start gap-3"
+              className="bg-slate-900 dark:bg-slate-800 text-white shadow-xl rounded px-4 py-3 min-w-[280px] max-w-sm border border-slate-700 pointer-events-auto flex items-start gap-3"
             >
               <div className="w-8 h-8 rounded-full bg-brand-primary/20 text-brand-primary flex items-center justify-center shrink-0 mt-0.5">
                 <Bell size={16} className="animate-bounce" />
