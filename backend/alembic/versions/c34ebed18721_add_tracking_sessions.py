@@ -29,9 +29,9 @@ def upgrade() -> None:
                existing_type=sa.REAL(),
                type_=sa.Float(precision=9),
                existing_nullable=False)
-    op.drop_index(op.f('ix_locations_tracking_session_id'), table_name='locations')
+    op.execute("DROP INDEX IF EXISTS ix_locations_tracking_session_id;")
     op.create_index(op.f('ix_locations_session_id'), 'locations', ['session_id'], unique=False)
-    op.drop_constraint(op.f('locations_tracking_session_id_fkey'), 'locations', type_='foreignkey')
+    op.execute("ALTER TABLE locations DROP CONSTRAINT IF EXISTS locations_tracking_session_id_fkey;")
     op.create_foreign_key(None, 'locations', 'tracking_sessions', ['session_id'], ['id'], ondelete='CASCADE')
     op.drop_column('locations', 'tracking_session_id')
     op.alter_column('tracking_sessions', 'status',
