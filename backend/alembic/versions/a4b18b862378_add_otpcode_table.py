@@ -28,11 +28,11 @@ def upgrade() -> None:
                existing_type=sa.REAL(),
                type_=sa.Float(precision=9),
                existing_nullable=False)
-    op.drop_index(op.f('ix_locations_vehicle_timestamp'), table_name='locations')
+    op.execute("DROP INDEX IF EXISTS ix_locations_vehicle_timestamp")
     op.alter_column('users', 'account_code',
                existing_type=sa.VARCHAR(length=32),
                nullable=False)
-    op.drop_constraint(op.f('uq_users_account_code'), 'users', type_='unique')
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
     op.create_index(op.f('ix_users_account_code'), 'users', ['account_code'], unique=True)
     op.alter_column('vehicles', 'vehicle_type',
                existing_type=sa.VARCHAR(length=32),
