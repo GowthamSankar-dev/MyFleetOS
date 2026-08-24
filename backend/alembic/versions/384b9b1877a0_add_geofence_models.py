@@ -36,7 +36,7 @@ def upgrade() -> None:
                type_=sa.Float(precision=9),
                existing_nullable=False)
     op.create_index(op.f('ix_pairing_requests_sender_id'), 'pairing_requests', ['sender_id'], unique=False)
-    op.drop_constraint(op.f('uq_users_account_code'), 'users', type_='unique')
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
     op.create_index(op.f('ix_vehicles_driver_id'), 'vehicles', ['driver_id'], unique=False)
     op.drop_column('vehicles', 'last_active_at')
     # ### end Alembic commands ###

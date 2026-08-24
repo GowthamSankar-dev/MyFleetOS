@@ -34,7 +34,7 @@ def upgrade() -> None:
                existing_type=sa.REAL(),
                type_=sa.Float(precision=9),
                existing_nullable=False)
-    op.drop_constraint(op.f('uq_users_account_code'), 'users', type_='unique')
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
     op.add_column('vehicles', sa.Column('geofence_id', sa.BigInteger(), nullable=True))
     op.create_index(op.f('ix_vehicles_geofence_id'), 'vehicles', ['geofence_id'], unique=False)
     op.create_foreign_key(None, 'vehicles', 'geofences', ['geofence_id'], ['id'], ondelete='SET NULL')

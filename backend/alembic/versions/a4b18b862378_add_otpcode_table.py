@@ -33,7 +33,7 @@ def upgrade() -> None:
                existing_type=sa.VARCHAR(length=32),
                nullable=False)
     op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
-    op.create_index(op.f('ix_users_account_code'), 'users', ['account_code'], unique=True)
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_account_code ON users (account_code)")
     op.alter_column('vehicles', 'vehicle_type',
                existing_type=sa.VARCHAR(length=32),
                nullable=False,
@@ -44,9 +44,9 @@ def upgrade() -> None:
     op.alter_column('vehicles', 'share_code',
                existing_type=sa.VARCHAR(length=32),
                nullable=False)
-    op.create_index(op.f('ix_vehicles_pairing_code'), 'vehicles', ['pairing_code'], unique=True)
-    op.create_index(op.f('ix_vehicles_share_code'), 'vehicles', ['share_code'], unique=True)
-    op.create_index(op.f('ix_vehicles_user_id'), 'vehicles', ['user_id'], unique=False)
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_vehicles_pairing_code ON vehicles (pairing_code)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_vehicles_share_code ON vehicles (share_code)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_vehicles_user_id ON vehicles (user_id)")
     # ### end Alembic commands ###
 
 

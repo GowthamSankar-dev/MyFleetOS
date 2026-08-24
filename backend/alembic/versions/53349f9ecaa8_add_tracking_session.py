@@ -31,7 +31,7 @@ def upgrade() -> None:
                existing_nullable=False)
     op.create_index(op.f('ix_locations_tracking_session_id'), 'locations', ['tracking_session_id'], unique=False)
     op.create_foreign_key(None, 'locations', 'tracking_sessions', ['tracking_session_id'], ['id'], ondelete='SET NULL')
-    op.drop_constraint(op.f('uq_users_account_code'), 'users', type_='unique')
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
     # ### end Alembic commands ###
 
 

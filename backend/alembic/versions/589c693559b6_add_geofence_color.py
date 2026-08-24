@@ -29,7 +29,7 @@ def upgrade() -> None:
                existing_type=sa.REAL(),
                type_=sa.Float(precision=9),
                existing_nullable=False)
-    op.drop_constraint(op.f('uq_users_account_code'), 'users', type_='unique')
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_account_code")
     # ### end Alembic commands ###
 
 
