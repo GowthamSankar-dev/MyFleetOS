@@ -26,10 +26,10 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            # Keep the connection alive; clients can optionally send pings
+            # Keep the connection alive; respond to client ping heartbeats
             data = await websocket.receive_text()
-            # Optional: echo the message back (useful for debugging)
-            await websocket.send_text(f"echo: {data}")
+            if data == 'ping':
+                await websocket.send_text('pong')
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         logger.info("Client disconnected normally.")
