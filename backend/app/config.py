@@ -14,10 +14,26 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URL", mode="before")
     def fix_database_url(cls, v: str) -> str:
-        if v and v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql+asyncpg://", 1)
-        if v and v.startswith("postgresql://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if not v:
+            return v
+        if v.startswith("postgres://"):
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            
+        # Fix unencoded special characters in password (like multiple '@')
+        if v.count("@") > 1:
+            try:
+                scheme_part, rest = v.split("://", 1)
+                credentials, host_part = rest.rsplit("@", 1)
+                if ":" in credentials:
+                    user, password = credentials.split(":", 1)
+                    from urllib.parse import quote, unquote
+                    password = quote(unquote(password))
+                    v = f"{scheme_part}://{user}:{password}@{host_part}"
+            except Exception:
+                pass
+                
         return v
 
     # ── Server ─────────────────────────────────────────────────────────────────
