@@ -619,7 +619,7 @@ export default function GPSSender() {
               )}
             </div>
             
-            {!isTracking && user?.email === 'gowthamsankarelayaraja@gmail.com' && (
+            {!isTracking && user?.email === 'donaga7559@archifun.com' && (
               <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded p-3 mb-4">
                 <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input 

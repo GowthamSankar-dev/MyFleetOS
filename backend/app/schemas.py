@@ -3,14 +3,14 @@ Pydantic schemas — request/response data transfer objects.
 """
 
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 
 
 # ── Auth schemas ────────────────────────────────────────────────────────────
 
 class UserRegister(BaseModel):
     """User registration payload."""
-    email: str = Field(..., description="User email address")
+    email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=6, description="User password (min 6 chars)")
     full_name: str = Field(default="Fleet Owner", description="Display name")
     code: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
@@ -19,24 +19,24 @@ class UserRegister(BaseModel):
 
 class UserLogin(BaseModel):
     """User login payload."""
-    email: str
+    email: EmailStr
     password: str
 
 
 class OTPRequest(BaseModel):
     """Payload to request an OTP (for login or password reset)."""
-    email: str = Field(..., description="User email address")
+    email: EmailStr = Field(..., description="User email address")
 
 
 class OTPVerifyLogin(BaseModel):
     """Payload to verify an OTP for login."""
-    email: str
+    email: EmailStr
     code: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
 
 
 class OTPVerifyReset(BaseModel):
     """Payload to verify an OTP for password reset."""
-    email: str
+    email: EmailStr
     code: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
     new_password: str = Field(..., min_length=6, description="New user password (min 6 chars)")
 
