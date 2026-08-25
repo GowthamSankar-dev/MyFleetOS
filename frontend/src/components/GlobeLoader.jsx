@@ -3,7 +3,7 @@ import React from "react";
 export default function GlobeLoader({ className = "w-10 h-10", ...props }) {
   return (
     <div className={className} {...props}>
-      <div className="w-full h-full text-slate-900 dark:text-transparent">
+      <div className="w-full h-full text-slate-900 dark:text-white">
         <svg
           fill="none"
           height="100%"
