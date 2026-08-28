@@ -25,7 +25,9 @@ export function ThemeProvider({ children }) {
   }, [isDarkMode])
 
   const [mapTheme, setMapTheme] = useState(() => {
-    return localStorage.getItem('fleetos_map_theme') || 'Satellite'
+    let saved = localStorage.getItem('fleetos_map_theme') || 'Satellite'
+    if (saved === 'OpenStreetMap') saved = 'Light Mode'
+    return saved
   })
 
   useEffect(() => {

@@ -160,9 +160,9 @@ export default function TopBar({ title, lastMessage, onToggleMobileMenu, hideSep
 
             {/* Logo */}
             <div className="flex items-center gap-1 md:gap-1.5 shrink-0 transition-colors">
-              <img src="/logo.png" alt="myfleetOS icon" className="h-7 md:h-8 object-contain" />
+              <img src="/logo.png" alt="ShowMyFleet icon" className="h-7 md:h-8 object-contain" />
               <span className="font-bold text-lg md:text-xl tracking-tight text-[#06375d] dark:text-[#14a076]">
-                MyFleetOS
+                ShowMyFleet
               </span>
             </div>
           </div>

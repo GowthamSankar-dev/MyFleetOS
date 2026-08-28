@@ -76,10 +76,10 @@ export default function Sidebar({ isConnected, vehicleCount, isOpen, onClose }) 
       {/* ── Logo & Header ────────────────────────────────────────────────── */}
       <div className="relative flex flex-col items-center justify-center px-5 py-6 border-b border-slate-200 dark:border-slate-800">
         <div className="w-12 h-12 shrink-0 flex items-center justify-center transition-colors">
-          <img src="/logo.png" alt="myfleetOS" className="w-full h-full object-contain" />
+          <img src="/logo.png" alt="ShowMyFleet" className="w-full h-full object-contain" />
         </div>
         <p className="font-bold text-lg tracking-tight text-[#06375d] dark:text-[#14a076] mt-2">
-          MyFleetOS
+          ShowMyFleet
         </p>
         {/* Mobile close button */}
         <button

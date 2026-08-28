@@ -45,7 +45,7 @@ def send_otp_email(to_email: str, otp: str, purpose: str) -> bool:
     subject, html_body, plain_body = _build_email_content(otp, purpose)
 
     msg = EmailMessage()
-    msg['From'] = f"myfleetOS <{sender}>"
+    msg['From'] = f"ShowMyFleet <{sender}>"
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.set_content(plain_body)                      # plain-text fallback
@@ -77,29 +77,29 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
     """Return (subject, html_body, plain_text_body) for the given OTP purpose."""
 
     if purpose == "register":
-        subject = "Verify your myfleetOS account"
+        subject = "Verify your ShowMyFleet account"
         heading = "Confirm your email"
         subheading = "You're almost there! Use the code below to complete your registration."
         action_label = "Registration Code"
-        footer_note = "You're receiving this because someone tried to create a myfleetOS account with this email address."
+        footer_note = "You're receiving this because someone tried to create a ShowMyFleet account with this email address."
     elif purpose == "login":
-        subject = "Your myfleetOS login code"
+        subject = "Your ShowMyFleet login code"
         heading = "Sign-in verification"
         subheading = "Use the code below to complete your passwordless sign-in. It expires in 10 minutes."
         action_label = "Login Code"
-        footer_note = "You're receiving this because a sign-in was requested for your myfleetOS account."
+        footer_note = "You're receiving this because a sign-in was requested for your ShowMyFleet account."
     elif purpose == "reset":
-        subject = "Reset your myfleetOS password"
+        subject = "Reset your ShowMyFleet password"
         heading = "Password reset request"
         subheading = "We received a request to reset your password. Use the code below to continue."
         action_label = "Password Reset Code"
         footer_note = "If you didn't request a password reset, you can safely ignore this email."
     else:
-        subject = "Your myfleetOS verification code"
+        subject = "Your ShowMyFleet verification code"
         heading = "Verification code"
         subheading = "Use the code below to verify your action. It expires in 10 minutes."
         action_label = "Verification Code"
-        footer_note = "You're receiving this from myfleetOS."
+        footer_note = "You're receiving this from ShowMyFleet."
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -117,7 +117,7 @@ def _build_email_content(otp: str, purpose: str) -> tuple[str, str, str]:
     <p style="font-size: 14px; color: #555;">This code expires in 10 minutes. Do not share it with anyone.</p>
     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
     <p style="font-size: 12px; color: #777;">{footer_note}</p>
-    <p style="font-size: 12px; color: #777;">&copy; 2025 myfleetOS</p>
+    <p style="font-size: 12px; color: #777;">&copy; 2025 ShowMyFleet</p>
   </div>
 </body>
 </html>"""
@@ -132,7 +132,7 @@ This code expires in 10 minutes. Do not share it with anyone.
 
 ---
 {footer_note}
-© 2025 myfleetOS — Real-time Fleet Tracking
+© 2025 ShowMyFleet — Real-time Fleet Tracking
 """
     return subject, html_body, plain_body
 
@@ -156,21 +156,21 @@ def send_geofence_alert_email(to_email: str, vehicle_name: str, zone_name: str) 
     
 Your vehicle "{vehicle_name}" has just left the designated geofence zone "{zone_name}".
 
-Please check your myfleetOS dashboard for live tracking.
+Please check your ShowMyFleet dashboard for live tracking.
 
-© 2025 myfleetOS — Real-time Fleet Tracking"""
+© 2025 ShowMyFleet — Real-time Fleet Tracking"""
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
 <body>
   <h2>Geofence Alert</h2>
   <p>Your vehicle <strong>{vehicle_name}</strong> has just left the designated geofence zone <strong>{zone_name}</strong>.</p>
-  <p>Please check your <a href="http://localhost:5173">FleetOS dashboard</a> for live tracking.</p>
+  <p>Please check your <a href="http://localhost:5173">ShowMyFleet dashboard</a> for live tracking.</p>
 </body>
 </html>"""
 
     msg = EmailMessage()
-    msg['From'] = f"myfleetOS Alerts <{sender}>"
+    msg['From'] = f"ShowMyFleet Alerts <{sender}>"
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.set_content(plain_body)

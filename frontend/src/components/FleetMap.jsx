@@ -115,7 +115,7 @@ function CustomMapControls({ showOwnerLocation, onToggleOwnerLocation }) {
     }
   }
 
-  const themes = ['Satellite', 'OpenStreetMap', 'Dark Mode', 'Light Mode']
+  const themes = ['Satellite', 'Dark Mode', 'Light Mode']
   const cycleTheme = () => {
     const nextIdx = (themes.indexOf(mapTheme) + 1) % themes.length
     setMapTheme(themes[nextIdx])
@@ -236,7 +236,6 @@ export default function FleetMap({ children, vehicles, locations, locationHistor
       zoom={initialZoom}
       style={{ width: '100%', height: '100%' }}
       zoomControl={false}
-      attributionControl={false}
     >
       <CustomMapControls showOwnerLocation={showOwnerLocation} onToggleOwnerLocation={onToggleOwnerLocation} />
       <GeofenceDrawer isDrawingGeofence={isDrawingGeofence} onCancelDrawing={onCancelDrawing} onGeofenceDrawn={onGeofenceDrawn} />
@@ -253,24 +252,20 @@ export default function FleetMap({ children, vehicles, locations, locationHistor
         </LayerGroup>
       )}
 
-      {mapTheme === 'OpenStreetMap' && (
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-      )}
+
 
       {mapTheme === 'Dark Mode' && (
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className="dark-map-tiles"
         />
       )}
 
       {mapTheme === 'Light Mode' && (
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/attributions">Carto</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
       )}
 

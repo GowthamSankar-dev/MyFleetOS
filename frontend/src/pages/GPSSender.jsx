@@ -691,7 +691,7 @@ export default function GPSSender() {
             <Mail size={18} />
           </a>
         </div>
-        <p className="text-[11px]">&copy; {new Date().getFullYear()} myfleetOS. All rights reserved.</p>
+        <p className="text-[11px]">&copy; {new Date().getFullYear()} ShowMyFleet. All rights reserved.</p>
       </footer>
     </motion.div>
   )

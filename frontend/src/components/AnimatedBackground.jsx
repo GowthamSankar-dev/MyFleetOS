@@ -23,18 +23,15 @@ export default function AnimatedBackground({ children, centerContent = true }) {
           doubleClickZoom={false}
           touchZoom={false}
           keyboard={false}
-          attributionControl={false}
           className="w-full h-full"
           style={{ background: isDarkMode ? '#020617' : '#f8fafc' }}
         >
           {/* CartoDB Map Layer */}
           <TileLayer
             key={isDarkMode ? 'dark' : 'light'}
-            url={isDarkMode 
-              ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-              : "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-            }
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            className={isDarkMode ? "dark-map-tiles" : ""}
           />
         </MapContainer>
 

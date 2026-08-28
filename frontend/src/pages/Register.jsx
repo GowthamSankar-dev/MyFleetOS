@@ -131,9 +131,9 @@ export default function Register() {
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="mb-4 flex flex-col items-center gap-1 transition-colors">
-            <img src="/logo.png" alt="myfleetOS icon" className="h-14 w-auto object-contain" />
+            <img src="/logo.png" alt="ShowMyFleet icon" className="h-14 w-auto object-contain" />
             <span className="font-bold text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
-              MyFleetOS
+              ShowMyFleet
             </span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Create your Account</h1>
@@ -363,7 +363,7 @@ export default function Register() {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Privacy Policy</h3>
             <div className="text-xs text-slate-600 dark:text-slate-400 space-y-3 leading-relaxed">
               <p>
-                <strong>myfleetOS</strong> values your privacy. If you choose to register and use our platform, your GPS data will <strong>only</strong> be collected when you actively click "Start Sharing" in the GPS Sender dashboard.
+                <strong>ShowMyFleet</strong> values your privacy. If you choose to register and use our platform, your GPS data will <strong>only</strong> be collected when you actively click "Start Sharing" in the GPS Sender dashboard.
               </p>
               <p>
                 Your real-time location is strictly used to display your position to the specific fleet owner you have paired with. 

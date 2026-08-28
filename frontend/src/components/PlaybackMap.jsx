@@ -20,7 +20,7 @@ function CustomMapControls({ isFullscreen, onToggleFullscreen }) {
     }
   }, [])
 
-  const themes = ['Satellite', 'OpenStreetMap', 'Dark Mode', 'Light Mode']
+  const themes = ['Satellite', 'Dark Mode', 'Light Mode']
   const cycleTheme = () => {
     const nextIdx = (themes.indexOf(mapTheme) + 1) % themes.length
     setMapTheme(themes[nextIdx])
@@ -200,7 +200,6 @@ export default function PlaybackMap({ locations, geofences, onClose }) {
         zoom={15}
         style={{ width: '100%', height: '100%' }}
         zoomControl={false}
-        attributionControl={false}
         ref={mapRef}
       >
         <CustomMapControls isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
@@ -211,14 +210,19 @@ export default function PlaybackMap({ locations, geofences, onClose }) {
             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
           </LayerGroup>
         )}
-        {mapTheme === 'OpenStreetMap' && (
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        )}
+
         {mapTheme === 'Dark Mode' && (
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer 
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+            className="dark-map-tiles"
+          />
         )}
         {mapTheme === 'Light Mode' && (
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer 
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+          />
         )}
 
         {locations && locations.length > 0 && (

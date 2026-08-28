@@ -80,9 +80,9 @@ export default function Login() {
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="mb-4 flex flex-col items-center gap-1 transition-colors">
-            <img src="/logo.png" alt="myfleetOS icon" className="h-14 w-auto object-contain" />
+            <img src="/logo.png" alt="ShowMyFleet icon" className="h-14 w-auto object-contain" />
             <span className="font-bold text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
-              MyFleetOS
+              ShowMyFleet
             </span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Sign in to Fleet Tracker</h1>

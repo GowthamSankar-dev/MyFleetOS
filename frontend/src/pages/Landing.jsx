@@ -36,9 +36,9 @@ export default function Landing() {
         {/* Navigation Bar */}
         <nav className="w-full max-w-6xl mx-auto px-4 md:px-6 flex items-center justify-between mb-8">
           <div className="flex items-center gap-1.5 md:gap-2">
-            <img src="/logo.png" alt="myfleetOS icon" className="w-7 h-7 sm:w-8 sm:h-8 md:w-12 md:h-12 object-contain shrink-0" />
+            <img src="/logo.png" alt="ShowMyFleet icon" className="w-7 h-7 sm:w-8 sm:h-8 md:w-12 md:h-12 object-contain shrink-0" />
             <span className="font-bold text-lg sm:text-xl md:text-2xl tracking-tight text-[#06375d] dark:text-[#14a076]">
-              MyFleetOS
+              ShowMyFleet
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -138,7 +138,7 @@ export default function Landing() {
 
         {/* Footer */}
         <footer className="w-full max-w-6xl mx-auto px-6 mt-16 md:mt-24 py-6 border-t border-slate-200/50 dark:border-slate-800/50 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-          <p>© {new Date().getFullYear()} myfleetOS. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ShowMyFleet. All rights reserved.</p>
           <div className="flex items-center gap-4 mt-4 sm:mt-0">
             <a href="https://github.com/GowthamSankar-dev" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors" title="GitHub">
               <Github size={18} />

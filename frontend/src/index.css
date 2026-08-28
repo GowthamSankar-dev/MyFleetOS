@@ -217,3 +217,8 @@ html.dark .leaflet-control-layers span {
 .radar-animation {
   animation: radar-pulse 2.5s cubic-bezier(0.1, 0, 0.3, 1) infinite;
 }
+
+/* ── OpenStreetMap Dark Theme ───────────────────────────────────────────── */
+.dark-map-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+}
