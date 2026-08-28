@@ -57,8 +57,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:5173",   # Vite dev server
         "http://localhost:3000",
-        "https://myfleetos.vercel.app",
-        "https://fleetos-web.vercel.app",
+        "https://showmyfleet.app",
+        "https://www.showmyfleet.app",
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fleetos-backend
+    name: showmyfleet-backend
     env: python
     region: ohio
     plan: starter # You can choose other plans like standard, pro, etc.
@@ -10,17 +10,17 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: fleetos-db
-          property: internalConnectionString
+          name: showmyfleet-db
+          property: connectionString
       - key: DEBUG
         value: "False"
       - key: ALLOWED_ORIGINS
-        value: "https://myfleetos.vercel.app"
+        value: "https://showmyfleet.vercel.app"
       - key: JWT_SECRET
         generateValue: true
 
 databases:
-  - name: fleetos-db
+  - name: showmyfleet-db
     region: ohio
     plan: starter # Recommended for production, free tier has limited connections/compute
     databaseName: fleet_db
